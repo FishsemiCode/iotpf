@@ -1,0 +1,25 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+config SERVICES_IOTPF
+	bool "Services IOTPF"
+	default n
+	---help---
+		Enable the IOTPF services
+
+if SERVICES_IOTPF
+
+config SERVICES_IOTPF_PRIORITY
+	int "iotpf task priority"
+	default 80
+	---help---
+		The priority for iotpf task.
+
+config SERVICES_IOTPF_STACKSIZE
+	int "iotpf task stack size"
+	default 2048
+	---help---
+		The stack size allocated for the iotpf task.
+
+endif # SERVICES_IOTPF
