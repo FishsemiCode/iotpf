@@ -386,7 +386,7 @@ bool std_security_create(st_context_t *contextP,
 #if CIS_ENABLE_DM
   if (TRUE == isBootstrap && TRUE != contextP->isDM && TRUE == contextP->isDTLS)
 #else
-  if (TRUE == isBootstrap && TRUE == contextP->isDTLS)
+  if (TRUE == contextP->isDTLS)
 #endif
     {
     #if CIS_ENABLE_PSK
@@ -408,7 +408,7 @@ bool std_security_create(st_context_t *contextP,
           cis_free(targetP);
           return false;
         }
-      targetP->psk_len = strlen(contextP->PSK);
+      targetP->psk_len = contextP->pskLen;
       targetP->secret = (char *)cis_malloc(targetP->psk_len+1);
       if (targetP->secret == NULL)
         {
@@ -566,6 +566,7 @@ int get_psk_info(dtls_context_t *ctx,
             dtls_warn("cannot set psk_identity -- buffer too small\n");
             return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
           }
+
         cis_memcpy(result, targetP->identify, targetP->id_len);
         return targetP->id_len;
       case DTLS_PSK_KEY:

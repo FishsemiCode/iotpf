@@ -160,6 +160,19 @@ int ciscom_getImsi(char *buffer)
   return 0;
 }
 
+int ciscom_getCellId(void)
+{
+  at_api_cellinfo cellinfo;
+  int ret;
+  ret = get_cellinfo(cis_g_modem_fd, &cellinfo);
+  if (ret < 0)
+    {
+      LOGE("%s: get_imsi fail\n", __func__);
+      return ret;
+    }
+  return cellinfo.cellId;
+}
+
 
 int ciscom_initialize(void)
 {

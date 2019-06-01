@@ -142,6 +142,10 @@ typedef int32_t      cis_time_t;  //normally in second unit
 //#define     CIS_ENABLE_MEMORYTRACE              1
 #endif
 
+#ifndef     CIS_OPERATOR_CTCC
+#define     CIS_OPERATOR_CTCC               0
+#endif
+
 #ifndef     CIS_VERSION_MAJOR
 #define     CIS_VERSION_MAJOR                   2
 #endif

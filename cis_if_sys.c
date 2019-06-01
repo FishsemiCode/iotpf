@@ -273,9 +273,17 @@ uint32_t cissys_getFwVersion(uint8_t **version)
 #define DEFAULT_CELL_ID (95)
 #define DEFAULT_RADIO_SIGNAL_STRENGTH (99)
 
-uint32_t cissys_getCellId()
+uint32_t cissys_getCellId(void)
 {
-  return DEFAULT_CELL_ID;
+  int ret = ciscom_getCellId();
+  if (ret < 0)
+    {
+      return DEFAULT_CELL_ID;
+    }
+  else
+    {
+      return ret;
+    }
 }
 
 uint32_t cissys_getRadioSignalStrength()

@@ -321,7 +321,20 @@ void *taskThread(void *obj)
           case SAMPLE_CALLBACK_WRITE:
             {
               //write
+            #if CIS_OPERATOR_CTCC && CIS_ONE_MCU
+              int16_t objectId;
+              int16_t instanceId;
+              int16_t resourceId;
+              uri_unmake(&objectId, &instanceId, &resourceId, &(node->uri));
+              if (objectId == std_object_binary_app_data_container ||
+                instanceId == 1 ||
+                resourceId == 0)
+                {
+                  std_binary_app_data_container_write(contextP, node->param.asWrite.value, node->param.asWrite.count);
+                }
+            #else
               contextP->callback.onWrite(contextP, &(node->uri), node->param.asWrite.value, node->param.asWrite.count, node->mid);
+            #endif
               cis_data_t *data = node->param.asWrite.value;
               cis_attrcount_t count = node->param.asWrite.count;
               for (int i = 0; i < count; i++)
@@ -536,10 +549,19 @@ cis_ret_t cis_init(void **context, void *configPtr, uint16_t configLen, void *DM
       uint16_t psk_len = psk_back_len - psk_front_len;
       if (psk_len > 0)
         {
+        #if CIS_OPERATOR_CTCC
+          contextP->pskLen = psk_len / 2;
+          config_psk = (char *)cis_malloc(psk_len / 2 + 1);
+          cissys_assert(config_psk != NULL);
+          cis_memset(config_psk, 0, psk_len / 2 + 1);
+          utils_hexStrToByte((const char *)configRet.data.cfg_net->user_data.data + psk_front_len, psk_len, (unsigned char *)config_psk);
+        #else
+          contextP->pskLen = psk_len;
           config_psk = (char *)cis_malloc(psk_len + 1);
           cissys_assert(config_psk != NULL);
           cis_memset(config_psk, 0, psk_len + 1);
           cis_memcpy(config_psk, configRet.data.cfg_net->user_data.data + psk_front_len, psk_len);
+        #endif
         }
       configRet.data.cfg_net->user_data.data += psk_back_len + 1;
     }
@@ -585,6 +607,26 @@ cis_ret_t cis_init(void **context, void *configPtr, uint16_t configLen, void *DM
     {
       std_security_create(contextP, 0, targetServerHost, false, securityObj);
     }
+#if CIS_OPERATOR_CTCC
+  cis_addobject(contextP, std_object_conn, NULL, NULL);
+  st_object_t *connObj = prv_findObject(contextP, std_object_conn);
+  if (connObj == NULL)
+    {
+      LOGE("ERROR:Failed to init conn object");
+      return CIS_RET_ERROR;
+    }
+  std_conn_moniter_create(contextP, 0, connObj);
+
+  cis_addobject(contextP, std_object_binary_app_data_container, NULL, NULL);
+  st_object_t *binaryAppDataContainerObj = prv_findObject(contextP, std_object_binary_app_data_container);
+  if (binaryAppDataContainerObj == NULL)
+    {
+      LOGE("ERROR:Failed to init binaryAppDataContainer object");
+      return CIS_RET_ERROR;
+    }
+  std_binary_app_data_container_data_create(contextP, 0, binaryAppDataContainerObj);
+  std_binary_app_data_container_data_create(contextP, 1, binaryAppDataContainerObj);
+#endif
 
 #if CIS_ENABLE_DTLS
   if (contextP->isDTLS == TRUE
@@ -1644,12 +1686,20 @@ void prv_localDeinit(st_context_t **context)
     }
   ctx->fota_created = 0;
 #endif
-#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER
+#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER || CIS_OPERATOR_CTCC
   if (ctx->conn_inst != NULL)
     {
       std_conn_moniter_clean(ctx);
     }
 #endif
+
+#if CIS_OPERATOR_CTCC
+  if (ctx->binary_app_data_container_inst != NULL)
+    {
+      std_binary_app_data_container_clean(ctx);
+    }
+#endif
+
 
 #if CIS_ENABLE_MONITER
   if (ctx->moniter_inst != NULL)
@@ -2104,15 +2154,23 @@ static int prv_makeDeviceName(char **name)
       return -1;
     }
   cis_memset((*name), 0, NBSYS_IMEI_MAXLENGTH + NBSYS_IMSI_MAXLENGTH + 2);
-  uint8_t imei = cissys_getIMEI((*name), NBSYS_IMEI_MAXLENGTH);
-  *((char*)((*name) + imei)) = ';';
-  uint8_t imsi = cissys_getIMSI((*name) + imei + 1, NBSYS_IMSI_MAXLENGTH);
-  if (imei <= 0 || imsi <= 0 || utils_strlen((char*)(*name)) <= 0)
+  uint8_t imei = cissys_getIMEI((*name), NBSYS_IMEI_MAXLENGTH + 1);
+  #if CIS_OPERATOR_CTCC
     {
-      LOGE("ERROR:Get IMEI/IMSI ERROR.\n");
-      return 0;
+      return imei;
     }
-  return imei + imsi;
+  #else
+    {
+      *((char*)((*name) + imei)) = ';';
+      uint8_t imsi = cissys_getIMSI((*name) + imei + 1, NBSYS_IMSI_MAXLENGTH + 1);
+      if (imei <= 0 || imsi <= 0 || utils_strlen((char*)(*name)) <= 0)
+        {
+          LOGE("ERROR:Get IMEI/IMSI ERROR.\n");
+          return 0;
+        }
+      return imei + imsi;
+    }
+  #endif
 }
 #if CIS_ENABLE_CMIOT_OTA
 static int prv_makeDeviceName_ota(char **name)

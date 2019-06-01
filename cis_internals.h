@@ -595,6 +595,10 @@ struct st_cis_context
   cis_time_t lifetime;
   cis_time_t lifetimeWarnningTime;
 
+#if CIS_ENABLE_UPDATE || CIS_OPERATOR_CTCC
+  cis_list_t *conn_inst;
+#endif
+
 #if CIS_ENABLE_UPDATE
   cis_list_t *firmware_inst;
   cis_list_t *device_inst;
@@ -630,6 +634,7 @@ struct st_cis_context
 #if CIS_ENABLE_DTLS
   bool isDTLS;
   dtls_context_t dtls;
+  uint8_t pskLen;
   char *PSK;
 #endif
 
@@ -646,6 +651,11 @@ struct st_cis_context
   cis_time_t ota_timeout_duration;
 #endif
   struct st_cisnet_context *pNetContext;
+
+#if CIS_OPERATOR_CTCC
+  cis_list_t *binary_app_data_container_inst;
+#endif
+
 };
 
 
@@ -920,6 +930,7 @@ int ciscom_getImei(char *buffer);
 int ciscom_getImsi(char *buffer);
 void ciscom_destory(void);
 int ciscom_initialize(void);
+int ciscom_getCellId(void);
 #if CIS_TWO_MCU
 void cisat_wakeup_pump(void);
 int cisat_readloop(int fd);

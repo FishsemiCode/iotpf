@@ -43,7 +43,7 @@ CSRCS   += cis_list.c cis_log.c cis_management.c cis_memtrace.c
 CSRCS   += cis_objects.c cis_observe.c cis_packet.c cis_registration.c
 CSRCS   += cis_tlv.c cis_transaction.c cis_uri.c cis_utils.c
 CSRCS   += cis_if_at.c cis_if_com.c cis_if_api.c
-CSRCS   += std_object/std_object.c std_object/std_object_security.c
+CSRCS   += std_object/std_object.c std_object/std_object_security.c std_object/std_object_conn_moniter.c std_object/std_object_binary_app_data_container.c
 CSRCS   += dtls/ccm.c dtls/cis_aes.c dtls/crypto.c dtls/dtls_debug.c dtls/dtls.c
 CSRCS   += dtls/hmac.c dtls/netq.c dtls/peer.c dtls/sha2.c
 

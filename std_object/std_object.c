@@ -42,11 +42,15 @@ extern cis_coapret_t std_security_read(st_context_t *contextP, cis_iid_t instanc
 extern cis_coapret_t std_security_write(st_context_t *contextP, cis_iid_t instanceId, int numData, st_data_t *dataArray, st_object_t *objectP);
 extern cis_coapret_t std_security_discover(st_context_t *contextP, uint16_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
 
-#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER
+#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER || CIS_OPERATOR_CTCC
 extern cis_coapret_t std_conn_moniter_read(st_context_t *contextP, cis_iid_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
-extern cis_coapret_t std_conn_moniter_write(st_context_t *contextP, cis_iid_t instanceId, int numData, st_data_t *dataArray, st_object_t *objectP);
 extern cis_coapret_t std_conn_moniter_discover(st_context_t *contextP, uint16_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
 #endif
+
+#if CIS_OPERATOR_CTCC
+extern cis_coapret_t std_binary_app_data_container_read(st_context_t *contextP, cis_iid_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
+#endif
+
 
 #if CIS_ENABLE_UPDATE
 extern cis_coapret_t std_device_read(st_context_t *contextP, cis_iid_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
@@ -93,9 +97,10 @@ extern cis_coapret_t std_moniter_read(st_context_t *contextP, cis_iid_t instance
 extern cis_coapret_t std_moniter_discover(st_context_t *contextP, uint16_t instanceId, int *numDataP, st_data_t **dataArrayP, st_object_t *objectP);
 #endif //CIS_ENABLE_MONITER
 
-
 #if CIS_ENABLE_UPDATE
 #define _UPDATE_PROLOAD_OBJECT_NUMBER  (3)
+#elif  CIS_OPERATOR_CTCC
+#define _UPDATE_PROLOAD_OBJECT_NUMBER  (2)
 #else
 #define _UPDATE_PROLOAD_OBJECT_NUMBER  (0)
 #endif
@@ -116,6 +121,7 @@ extern cis_coapret_t std_moniter_discover(st_context_t *contextP, uint16_t insta
 #define _MONITER_PROLOAD_OBJECT_NUMBER  (0)
 #endif
 
+
 #define PROLOAD_OBJECT_NUMBER (1 + _UPDATE_PROLOAD_OBJECT_NUMBER + _CMIOT_OTA_PROLOAD_OBJECT_NUMBER + _MONITER_PROLOAD_OBJECT_NUMBER)
 
 static const struct st_std_object_callback_mapping std_object_callback_mapping[PROLOAD_OBJECT_NUMBER] =
@@ -123,13 +129,21 @@ static const struct st_std_object_callback_mapping std_object_callback_mapping[P
   {
     CIS_SECURITY_OBJECT_ID, std_security_read, std_security_write, NULL, std_security_discover
   },
+
 #if CIS_ENABLE_UPDATE
   {
     CIS_DEVICE_OBJECT_ID, std_device_read, std_device_write, NULL, std_device_discover
   },
+#endif
+
+#if CIS_ENABLE_UPDATE || CIS_OPERATOR_CTCC
+
   {
-    CIS_CONNECTIVITY_OBJECT_ID, std_conn_moniter_read, std_conn_moniter_write, NULL, std_conn_moniter_discover
+    CIS_CONNECTIVITY_OBJECT_ID, std_conn_moniter_read, NULL, NULL, std_conn_moniter_discover
   },
+#endif
+
+#if CIS_ENABLE_UPDATE
   {
     CIS_FIRMWARE_OBJECT_ID, std_firmware_read, std_firmware_write, std_firmware_execute, std_firmware_discover
   },
@@ -152,13 +166,20 @@ static const struct st_std_object_callback_mapping std_object_callback_mapping[P
   },
 #else
   {
-    CIS_CONNECTIVITY_OBJECT_ID, std_conn_moniter_read, std_conn_moniter_write, NULL, std_conn_moniter_discover
+    CIS_CONNECTIVITY_OBJECT_ID, std_conn_moniter_read, NULL, NULL, std_conn_moniter_discover
   },
   {
     CIS_MONITOR_OBJECT_ID, std_moniter_read, NULL, NULL, std_moniter_discover
   },
 #endif
 #endif//CIS_ENABLE_MONITER
+
+#if CIS_OPERATOR_CTCC
+
+  {
+    CIS_BINARY_APP_DATA_CONTAINER_OBJECT_ID, std_binary_app_data_container_read, NULL, NULL, NULL
+  },
+#endif
 
 };
 
@@ -170,7 +191,7 @@ bool std_object_isStdObject(cis_oid_t oid)
       case CIS_DEVICE_OBJECT_ID:
       case CIS_FIRMWARE_OBJECT_ID:
     #endif //CIS_ENABLE_UPDATE
-    #if CIS_ENABLE_MONITER || CIS_ENABLE_UPDATE
+    #if CIS_ENABLE_MONITER || CIS_ENABLE_UPDATE || CIS_OPERATOR_CTCC
       case CIS_CONNECTIVITY_OBJECT_ID:
     #endif
       case CIS_SECURITY_OBJECT_ID:
@@ -181,6 +202,9 @@ bool std_object_isStdObject(cis_oid_t oid)
       case CIS_POWERUPLOG_OBJECT_ID:
       case CIS_CMDHDEFECVALUES_OBJECT_ID:
     #endif //CIS_ENABLE_CMIOT_OTA
+    #if CIS_OPERATOR_CTCC
+      case CIS_BINARY_APP_DATA_CONTAINER_OBJECT_ID:
+    #endif
         return true;
       default:
         return false;
@@ -279,11 +303,10 @@ cis_coapret_t std_object_write_handler(st_context_t *contextP, cis_iid_t instanc
   return COAP_503_SERVICE_UNAVAILABLE;
 }
 
-#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER
+#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER || CIS_OPERATOR_CTCC
 cis_list_t *std_object_get_conn(st_context_t *contextP, cis_iid_t instanceId)
 {
-  contextP->conn_inst = CIS_LIST_FIND(contextP->conn_inst, instanceId);
-  return contextP->conn_inst;
+  return CIS_LIST_FIND(contextP->conn_inst, instanceId);
 }
 
 cis_list_t* std_object_put_conn(st_context_t *contextP, cis_list_t *targetP)
@@ -297,6 +320,25 @@ void std_object_remove_conn(st_context_t *contextP, cis_list_t *targetP)
   contextP->conn_inst = CIS_LIST_RM(contextP->conn_inst, targetP->id, NULL);
 }
 #endif
+
+#if CIS_OPERATOR_CTCC
+cis_list_t *std_object_get_binary_app_data_container(st_context_t *contextP, cis_iid_t instanceId)
+{
+  return CIS_LIST_FIND(contextP->binary_app_data_container_inst, instanceId);
+}
+
+cis_list_t* std_object_put_binary_app_data_container(st_context_t *contextP, cis_list_t *targetP)
+{
+  contextP->binary_app_data_container_inst = CIS_LIST_ADD(contextP->binary_app_data_container_inst, targetP);
+  return contextP->binary_app_data_container_inst;
+}
+
+void std_object_remove_binary_app_data_container(st_context_t *contextP, cis_list_t *targetP)
+{
+  contextP->binary_app_data_container_inst = CIS_LIST_RM(contextP->binary_app_data_container_inst, targetP->id, NULL);
+}
+#endif
+
 
 #if CIS_ENABLE_UPDATE
 cis_list_t *std_object_get_device(st_context_t *contextP, cis_iid_t instanceId)

@@ -239,22 +239,38 @@ coap_status_t observe_handleRequest(st_context_t *contextP, st_uri_t *uriP,
     }
   if (std_object_isStdObject(uriP->objectId))
     {
+      coap_message_type_t type = COAP_205_CONTENT;
   #if CIS_ENABLE_CMIOT_OTA
       if(uriP->objectId != CIS_POWERUPLOG_OBJECT_ID && uriP->objectId != CIS_CMDHDEFECVALUES_OBJECT_ID)
         {
-          coap_packet_t packet[1];
-          coap_init_message(packet, COAP_TYPE_ACK, COAP_405_METHOD_NOT_ALLOWED, (uint16_t)message->mid);
-          coap_set_header_token(packet, message->token, message->token_len);
-          packet_send(contextP, packet);
-          return COAP_IGNORE;
+          type = COAP_405_METHOD_NOT_ALLOWED;
         }
-  #else
+  #elif CIS_OPERATOR_CTCC
+      if (uriP->objectId != CIS_BINARY_APP_DATA_CONTAINER_OBJECT_ID)
+        {
+          type = COAP_405_METHOD_NOT_ALLOWED;
+        }
+      else
+        {
+          st_observed_t *observed;
+          observed = prv_getObserved(contextP, uriP, utils_convertMediaType(message->content_type));
+          if (observed == NULL)
+            {
+              return COAP_500_INTERNAL_SERVER_ERROR;
+            }
+          observed->actived = true;
+          observed->msgid = message->mid;
+          observed->tokenLen = message->token_len;
+          cis_memcpy(observed->token, message->token, message->token_len);
+          observed->lastTime = utils_gettime_s();
+        }
+  #endif
       coap_packet_t packet[1];
-      coap_init_message(packet, COAP_TYPE_ACK, COAP_405_METHOD_NOT_ALLOWED, (uint16_t)message->mid);
+      coap_init_message(packet, COAP_TYPE_ACK, type, (uint16_t)message->mid);
       coap_set_header_token(packet, message->token, message->token_len);
+      coap_set_header_observe(packet, 0);
       packet_send(contextP, packet);
       return COAP_IGNORE;
-  #endif
     }
   coap_get_header_observe(message, &flag);
   isObserveFlag = (flag == 0 ? true : false);

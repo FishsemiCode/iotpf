@@ -130,7 +130,6 @@ static void prv_observeNotify(void *context, cis_uri_t *uri, cis_mid_t mid)
         {
           case SAMPLE_OID_A:
             {
-              LOGD("btxbtxbt notify A");
               for (index = 0; index < SAMPLE_A_INSTANCE_COUNT; index++)
                 {
                   st_instance_a *inst = &g_instList_a[index];
@@ -156,14 +155,12 @@ static void prv_observeNotify(void *context, cis_uri_t *uri, cis_mid_t mid)
                       uri->resourceId = attributeA_stringValue;
                       cis_uri_update(uri);
                       cis_notify(context, uri, &tmpdata[2], mid, CIS_NOTIFY_CONTENT, false);
-                      LOGD("btxbtxbt notify A success");
                     }
                 }
             }
             break;
           case SAMPLE_OID_B:
             {
-              LOGD("btxbtxbt notify B");
               for (index = 0; index < SAMPLE_B_INSTANCE_COUNT; index++)
                 {
                   st_instance_b *inst = &g_instList_b[index];
@@ -189,7 +186,6 @@ static void prv_observeNotify(void *context, cis_uri_t *uri, cis_mid_t mid)
                       uri->resourceId = attributeB_stringValue;
                       cis_uri_update(uri);
                       cis_notify(context, uri, &tmpdata[2], mid, CIS_NOTIFY_CONTENT, false);
-                      LOGD("btxbtxbt notify B success");
                     }
                 }
             }

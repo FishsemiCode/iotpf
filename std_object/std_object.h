@@ -44,7 +44,7 @@ extern int g_reboot;
  * Standard Object IDs
  */
 #define CIS_SECURITY_OBJECT_ID          (0)
-#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER
+#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER || CIS_OPERATOR_CTCC
 #define CIS_CONNECTIVITY_OBJECT_ID      (4)
 #endif
 #if CIS_ENABLE_UPDATE
@@ -61,12 +61,22 @@ extern int g_reboot;
 #define CIS_CMDHDEFECVALUES_OBJECT_ID   (2051)
 #endif
 
+#if CIS_OPERATOR_CTCC
+#define CIS_BINARY_APP_DATA_CONTAINER_OBJECT_ID      (19)
+#endif
+
+
 typedef enum et_std_objectid
 {
   std_object_security = CIS_SECURITY_OBJECT_ID,
 #if CIS_ENABLE_UPDATE
   std_object_device = CIS_DEVICE_OBJECT_ID,
+#endif
+#if CIS_ENABLE_UPDATE || CIS_OPERATOR_CTCC
   std_object_conn = CIS_CONNECTIVITY_OBJECT_ID,
+#endif
+
+#if CIS_ENABLE_UPDATE
   std_object_firmware = CIS_FIRMWARE_OBJECT_ID,
 #endif
 #if CIS_ENABLE_MONITER
@@ -79,6 +89,11 @@ typedef enum et_std_objectid
   std_object_poweruplog = CIS_POWERUPLOG_OBJECT_ID,
   std_object_cmdhdefecvalues = CIS_CMDHDEFECVALUES_OBJECT_ID,
 #endif
+
+#if CIS_OPERATOR_CTCC
+  std_object_binary_app_data_container = CIS_BINARY_APP_DATA_CONTAINER_OBJECT_ID,
+#endif
+
 
 }cis_std_objectid;
 
@@ -133,11 +148,14 @@ typedef enum et_std_objectid
 /*
 * Resource IDs for the LWM2M Connectivity Moniter Object
 */
+#define RES_CONN_NETWORK_BEARER_ID			        0
 #define RES_CONN_RADIO_SIGNAL_STRENGTH_ID			2
 #define RES_CONN_CELL_ID							8
-//#define RES_CONN_RSRP                               6035
 #define RES_CONN_SINR                               6038
 
+#if CIS_OPERATOR_CTCC
+#define RES_BINARY_APP_DATA_CONTAINER_DATA_ID	    0
+#endif
 /*
 * Resource IDs for the Extend Moniter Object
 */
@@ -217,11 +235,18 @@ cis_list_t *std_object_get_securitys(st_context_t *contextP);
 cis_list_t *std_object_put_securitys(st_context_t *contextP, cis_list_t *targetP);
 void std_object_remove_securitys(st_context_t *contextP, cis_list_t *targetP);
 
-#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER
+#if CIS_ENABLE_UPDATE || CIS_ENABLE_MONITER || CIS_OPERATOR_CTCC
 cis_list_t *std_object_get_conn(st_context_t *contextP, cis_iid_t instanceId);
 cis_list_t *std_object_put_conn(st_context_t *contextP, cis_list_t *targetP);
 void std_object_remove_conn(st_context_t *contextP, cis_list_t *targetP);
 #endif
+
+#if CIS_OPERATOR_CTCC
+cis_list_t *std_object_get_binary_app_data_container(st_context_t *contextP, cis_iid_t instanceId);
+cis_list_t *std_object_put_binary_app_data_container(st_context_t *contextP, cis_list_t *targetP);
+void std_object_remove_binary_app_data_container(st_context_t *contextP, cis_list_t *targetP);
+#endif
+
 
 #if CIS_ENABLE_UPDATE
 cis_list_t *std_object_get_device(st_context_t *contextP, cis_iid_t instanceId);
@@ -289,13 +314,22 @@ void std_device_clean(st_context_t *contextP);
 
 #endif
 
-#if CIS_ENABLE_MONITER || CIS_ENABLE_UPDATE
+#if CIS_ENABLE_MONITER || CIS_ENABLE_UPDATE || CIS_OPERATOR_CTCC
 /*
 * object_conn_moniter.c
 */
-boo std_conn_moniter_create(st_context_t *contextP, int instanceId, st_object_t *connObj);
+bool std_conn_moniter_create(st_context_t *contextP, int instanceId, st_object_t *connObj);
 void std_conn_moniter_clean(st_context_t *contextP);
 #endif
+
+#if CIS_OPERATOR_CTCC
+/*
+* object_binary_app_data_container.c
+*/
+bool std_binary_app_data_container_data_create(st_context_t *contextP, int instanceId, st_object_t *connObj);
+void std_binary_app_data_container_clean(st_context_t *contextP);
+#endif
+
 
 #if	CIS_ENABLE_CMIOT_OTA
 /*

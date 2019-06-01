@@ -65,7 +65,11 @@
 #define NBCFG_GetByteHi(p)                  (((uint8_t)(*p) >> 4) & 0x0F)
 #define NBCFG_GetByteLow(p)                 ((uint8_t)(*p) & 0x0F)
 
+#if CIS_OPERATOR_CTCC
+#define NBCFG_DEFAULT_BOOTSTRAP                  ("180.101.147.115:5684")
+#else
 #define NBCFG_DEFAULT_BOOTSTRAP                  ("183.230.40.39:5684")
+#endif
 
 #define NBCFG_DEFAULT_MTU                   (1024)
 
@@ -393,12 +397,22 @@ void prvDefaultConfig(ciscfg_context_t *context)
   cfgNet->username.data = NULL;
   cfgNet->password.len = 0;
   cfgNet->password.data = NULL;
+#if CIS_OPERATOR_CTCC
+  cfgNet->bs_enabled = false;
+  cfgNet->dtls_enabled = true;
+#else
   cfgNet->bs_enabled = true;
   cfgNet->dtls_enabled = true;
+#endif
   cfgNet->host.len = (uint16_t)utils_strlen(NBCFG_DEFAULT_BOOTSTRAP);
   cfgNet->host.data = (uint8_t*)NBCFG_DEFAULT_BOOTSTRAP;
+#if CIS_OPERATOR_CTCC
+  cfgNet->user_data.len = strlen("PSK:4e235bf7f18b7c9783ac36cd0c953e5a;");
+  cfgNet->user_data.data = (uint8_t *)"PSK:4e235bf7f18b7c9783ac36cd0c953e5a;";
+#else
   cfgNet->user_data.len = strlen("PSK:8QW7CDpfUsKTzr3l;");
   cfgNet->user_data.data = (uint8_t *)"PSK:8QW7CDpfUsKTzr3l;";
+#endif
 
   LOGI(">>Default Config Sys");
   LOGD("Log Enabled:%u", cfgSys->log_enabled);

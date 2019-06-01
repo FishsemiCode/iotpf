@@ -454,18 +454,15 @@ static int calculate_key_block(dtls_context_t *ctx,
                                 const session_t *session,
                                 dtls_peer_type role)
 {
-  unsigned char *pre_master_secret;
   int pre_master_len = 0;
   dtls_security_parameters_t *security = dtls_security_params_next(peer);
   uint8 master_secret[DTLS_MASTER_SECRET_LENGTH];
+  uint8 pre_master_secret[(DTLS_PSK_MAX_KEY_LEN + 2) * 2];
 
   if (!security)
     {
       return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
     }
-
-  pre_master_secret = security->key_block;
-
   switch (handshake->cipher)
     {
     #if CIS_ENABLE_PSK
@@ -486,7 +483,7 @@ static int calculate_key_block(dtls_context_t *ctx,
           /* Temporarily use the key_block storage space for the pre master secret. */
           pre_master_len = dtls_psk_pre_master_secret(psk, len,
             pre_master_secret,
-            MAX_KEYBLOCK_LENGTH);
+            (DTLS_PSK_MAX_KEY_LEN + 2) * 2);
 
           dtls_debug_hexdump("psk", psk, len);
 

@@ -51,6 +51,7 @@
 #include <cis_def.h>
 #include <cis_api.h>
 #include "at_api.h"
+#include "std_object/std_object.h"
 
 typedef void (*cis_atcmd_handler_t)(int fd, char *param);
 
@@ -336,8 +337,12 @@ static cis_coapret_t cis_at_onWrite(void *context, cis_uri_t *uri, const cis_dat
   uri_unmake(&objectId, &instanceId, &resourceId, uri);
   for (index = 0; index < attrcount; index++)
     {
+    #if CIS_OPERATOR_CTCC
+      len = snprintf(buf, sizeof(buf), "%c%c+MIPLWRITE:%d", g_cis_at_cr, g_cis_at_lf, mid);
+    #else
       len = snprintf(buf, sizeof(buf), "%c%c+MIPLWRITE:0, %d, %d, %d, %d, %d", g_cis_at_cr, g_cis_at_lf, mid,
         objectId, instanceId, (value + index)->id, (value + index)->type);
+    #endif
       switch (value->type)
         {
           case cis_data_type_string:
@@ -953,7 +958,8 @@ void cis_miplnotify_handler(int fd, char *param)
 {
   int ret;
   char *line;
-  int ref, msgId, objectId, instanceId, resourceId, valuetype, len, index, flag;
+  int objectId, instanceId, resourceId, valuetype, len, index, flag;
+  int msgId = 0;
   char *valueStr;
   cis_uri_t uri;
   cis_coapret_t result;
@@ -964,6 +970,19 @@ void cis_miplnotify_handler(int fd, char *param)
     {
       goto error;
     }
+#if CIS_OPERATOR_CTCC
+  objectId = std_object_binary_app_data_container;
+  instanceId = 0;
+  resourceId = 0;
+  valuetype = cis_data_type_opaque;
+  st_observed_t *targetP;
+  targetP = ((st_context_t *)g_context)->observedList;
+  if (targetP)
+    {
+      msgId = targetP->msgid;
+    }
+#else
+  int ref;
   ret = at_tok_nextint(&line, &ref);
   if (ret < 0)
     {
@@ -999,7 +1018,7 @@ void cis_miplnotify_handler(int fd, char *param)
     {
       goto error;
     }
-
+#endif
   ret = at_tok_nextint(&line, &len);
   if (ret < 0)
     {
