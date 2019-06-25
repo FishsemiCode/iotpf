@@ -37,18 +37,10 @@ PRIORITY = CONFIG_SERVICES_IOTPF_PRIORITY
 STACKSIZE = CONFIG_SERVICES_IOTPF_STACKSIZE
 
 MAINSRC = iotpf.c
-CSRCS   += cis_block1.c cis_coap.c cis_bootstrap.c
-CSRCS   += cis_config.c cis_core.c cis_data.c cis_discover.c cis_if_net.c cis_if_sys.c
-CSRCS   += cis_list.c cis_log.c cis_management.c cis_memtrace.c
-CSRCS   += cis_objects.c cis_observe.c cis_packet.c cis_registration.c
-CSRCS   += cis_tlv.c cis_transaction.c cis_uri.c cis_utils.c
-CSRCS   += cis_if_at.c cis_if_com.c cis_if_api.c
-CSRCS   += std_object/std_object.c std_object/std_object_security.c std_object/std_object_conn_moniter.c std_object/std_object_binary_app_data_container.c
-CSRCS   += dtls/ccm.c dtls/cis_aes.c dtls/crypto.c dtls/dtls_debug.c dtls/dtls.c
-CSRCS   += dtls/hmac.c dtls/netq.c dtls/peer.c dtls/sha2.c
-
+CSRCS   += cis_if_api.c
 
 CFLAGS_STR := "$(CFLAGS)"
 CFLAGS += -I $(TOPDIR)/../vendor/services/ril/at_client
+CFLAGS += -I $(TOPDIR)/../vendor/services/iotpf_lib
 PROGNAME = iotpf(EXEEXT)
 include $(APPDIR)/Application.mk

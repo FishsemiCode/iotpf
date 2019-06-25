@@ -48,10 +48,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netutils/base64.h>
-#include <cis_def.h>
-#include <cis_api.h>
 
-#include "dtls/dtls_debug.h"
+#include "cis_api.h"
+#include "cis_log.h"
 
 /****************************************************************************
  * Pre-processor definitions
@@ -86,7 +85,7 @@ static int iotpf_daemon(int argc, char *argv[])
   if (ret < 0)
     {
       LOGE("cisat_initialize error");
-      return -1;
+      goto error;
     }
   cisat_readloop(ret);
 #elif CIS_ONE_MCU
@@ -94,10 +93,13 @@ static int iotpf_daemon(int argc, char *argv[])
   if (ret < 0)
     {
       LOGE("cisapi_initialize error");
-      return -1;
+      goto error;
     }
 #endif
   return 0;
+error:
+  ciscom_destory();
+  return -1;
 }
 
 #ifdef CONFIG_BUILD_KERNEL

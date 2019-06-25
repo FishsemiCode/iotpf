@@ -37,29 +37,15 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/select.h>
-
-#include <cis_def.h>
-#include <cis_if_sys.h>
-#include <cis_log.h>
-#include <cis_list.h>
-#if CIS_ONE_MCU
-#if CIS_ENABLE_CMIOT_OTA
-#include "std_object/std_object.h"
-#define CIS_CMIOT_OTA_START_TIME_OUT_MSEC  (180*1000)
-#endif
-#define MAX_PACKET_SIZE			(256)
-
-#include "cis_object_defs.h"
 #include <string.h>
 
-#if CIS_ENABLE_CMIOT_OTA
-extern uint8_t g_cmiot_otastart_flag; //otastart -flag should be  set when OTASTART command is called by user
-extern cis_ota_history_state g_cmiot_otafinishstate_flag; //Ota finish state flag should be  set when SDK received otafinish:0 from OneNET. It means this terminal has already finished the OTA procedure successfully
-extern int32_t g_cmiot_timeout_duration;
+#include "cis_log.h"
+#include "cis_api.h"
+#include "cis_if_api.h"
 
+#if CIS_ONE_MCU
+#define MAX_PACKET_SIZE			(256)
 
-uint8_t cissys_recover_psm(void);
-#endif
 
 static const uint8_t config_hex[] =
 {
@@ -101,7 +87,6 @@ static pthread_t g_cisapi_onenet_tid = -1;
 
 void cisapi_wakeup_pump(void)
 {
-  LOGD("api wake up the pump");
   write(g_cisapi_pip_fd[1], "w", 1);
 }
 
@@ -642,7 +627,6 @@ static cis_coapret_t prv_writeResponse(void *context, cis_uri_t *uri, const cis_
 
           for (int i = 0; i < count; i++)
             {
-              printf("write %d/%d/%d\n", uri->objectId, uri->instanceId, value[i].id);
               switch (value[i].id)
                 {
                   case attributeA_intValue:
@@ -678,7 +662,6 @@ static cis_coapret_t prv_writeResponse(void *context, cis_uri_t *uri, const cis_
             }
           for (int i = 0; i < count; i++)
             {
-              printf("write %d/%d/%d\n", uri->objectId, uri->instanceId, value[i].id);
               switch (value[i].id)
                 {
                   case attributeB_intValue:
@@ -740,7 +723,6 @@ static cis_coapret_t prv_execResponse(void *context, cis_uri_t *uri, const uint8
             }
           if (uri->resourceId == actionA_1)
             {
-              printf("exec actionA_1\n");
               cis_response(context, NULL, NULL, mid, CIS_RESPONSE_EXECUTE);
             }
           else
@@ -762,7 +744,6 @@ static cis_coapret_t prv_execResponse(void *context, cis_uri_t *uri, const uint8
             }
           if (uri->resourceId == actionB_1)
             {
-              printf("exec actionB_1\n");
               cis_response(context, NULL, NULL, mid, CIS_RESPONSE_EXECUTE);
             }
           else
@@ -782,10 +763,6 @@ static cis_coapret_t prv_paramsResponse(void *context, cis_uri_t *uri, cis_obser
   uint8_t index;
   st_sample_object* object = NULL;
 
-  if (CIS_URI_IS_SET_RESOURCE(uri))
-    {
-      printf("prv_params:(%d/%d/%d)\n", uri->objectId, uri->instanceId, uri->resourceId);
-    }
   if (!CIS_URI_IS_SET_INSTANCE(uri))
     {
       return CIS_RET_ERROR;
@@ -806,8 +783,6 @@ static cis_coapret_t prv_paramsResponse(void *context, cis_uri_t *uri, cis_obser
 
   /*set parameter to observe resource*/
   /*do*/
-  printf("set:%x,clr:%x\n", parameters.toSet, parameters.toClear);
-  printf("min:%d,max:%d,gt:%f,lt:%f,st:%f\n", parameters.minPeriod, parameters.maxPeriod, parameters.greaterThan, parameters.lessThan, parameters.step);
 
   cis_response(context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE_PARAMS);
   cisapi_wakeup_pump();

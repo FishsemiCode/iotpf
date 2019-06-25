@@ -1,5 +1,5 @@
 /****************************************************************************
- * external/services/iotpf/cis_object_defs.h
+ * external/services/iotpf/cis_if_api.h
  *
  *     Copyright (C) 2019 FishSemi Inc. All rights reserved.
  *
@@ -32,10 +32,11 @@
  *
  ****************************************************************************/
 
-#ifndef _CIS_OBJECT_DEFS_H_
-#define _CIS_OBJECT_DEFS_H_
+#ifndef _CIS_IF_API_H_
+#define _CIS_IF_API_H_
 
 #include "cis_api.h"
+#include "cis_list.h"
 
 
 #define SAMPLE_OBJECT_MAX       2
@@ -160,17 +161,6 @@ static const cis_rid_t const_ActIds_b[] =
   actionB_1,
 };
 
-typedef enum
-{
-  SAMPLE_CALLBACK_UNKNOWN = 0,
-  SAMPLE_CALLBACK_READ,
-  SAMPLE_CALLBACK_WRITE,
-  SAMPLE_CALLBACK_EXECUTE,
-  SAMPLE_CALLBACK_OBSERVE,
-  SAMPLE_CALLBACK_SETPARAMS,
-  SAMPLE_CALLBACK_DISCOVER,
-  SAMPLE_CALLBACK_EVENT,
-}et_callback_type_t1;
 
 struct st_observe_info
 {
@@ -180,38 +170,4 @@ struct st_observe_info
   cis_observe_attr_t params;
 };
 
-struct st_callback_info
-{
-  struct st_callback_info *next;
-  cis_listid_t mid;
-  et_callback_type_t1 flag;
-  cis_uri_t uri;
-
-  union
-    {
-      struct
-        {
-          cis_data_t *value;
-          cis_attrcount_t count;
-        }asWrite;
-      struct
-        {
-          uint8_t *buffer;
-          uint32_t length;
-        }asExec;
-      struct
-        {
-          bool flag;
-        }asObserve;
-      struct
-        {
-          cis_observe_attr_t params;
-        }asObserveParam;
-      struct
-        {
-          cis_evt_t eid;
-          void *param;
-        }asEventParam;
-    }param;
-};
-#endif//_CIS_OBJECT_DEFS_H_
+#endif//_CIS_IF_API_H_

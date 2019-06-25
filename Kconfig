@@ -5,6 +5,7 @@
 config SERVICES_IOTPF
 	bool "Services IOTPF"
 	default n
+	select SERVICES_IOTPF_LIB
 	---help---
 		Enable the IOTPF services
 
