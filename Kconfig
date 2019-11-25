@@ -23,4 +23,18 @@ config SERVICES_IOTPF_STACKSIZE
 	---help---
 		The stack size allocated for the iotpf task.
 
+config SERVICES_IOTPF_OPERATOR
+	string "iotpf operator"
+	default "ctcc"
+	---help---
+		Which operator iot platform want to connect to.
+		Now support ctcc and cmcc.
+
+config SERVICES_IOTPF_MODE
+	string "iotpf mode"
+	default "api"
+	---help---
+		Which mode iotpf service works.
+		Now support "at" and "api"
+
 endif # SERVICES_IOTPF

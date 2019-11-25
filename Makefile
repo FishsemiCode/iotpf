@@ -37,10 +37,27 @@ PRIORITY = CONFIG_SERVICES_IOTPF_PRIORITY
 STACKSIZE = CONFIG_SERVICES_IOTPF_STACKSIZE
 
 MAINSRC = iotpf.c
-CSRCS   += cis_if_api.c
+
 
 CFLAGS_STR := "$(CFLAGS)"
 CFLAGS += -I $(TOPDIR)/../vendor/services/ril/at_client
 CFLAGS += -I $(TOPDIR)/../vendor/services/iotpf_lib
+
+ifeq ($(CONFIG_SERVICES_IOTPF_OPERATOR), "ctcc")
+CFLAGS += -DCIS_OPERATOR_CTCC
+endif
+
+ifeq ($(CONFIG_SERVICES_IOTPF_MODE), "at")
+CFLAGS += -DCIS_TWO_MCU
+else
+ifeq ($(CONFIG_SERVICES_IOTPF_OPERATOR), "ctcc")
+CSRCS   += cis_if_api_ctcc.c
+CSRCS   += object_light_control.c
+else
+CSRCS   += cis_if_api.c
+endif
+CFLAGS += -DCIS_ONE_MCU
+endif
+
 PROGNAME = iotpf(EXEEXT)
 include $(APPDIR)/Application.mk

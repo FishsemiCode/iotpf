@@ -48,6 +48,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netutils/base64.h>
+#include <nuttx/power/pm.h>
 
 #include "cis_api.h"
 #include "cis_log.h"
@@ -71,16 +72,31 @@
 /****************************************************************************
  * Public Funtions
  ****************************************************************************/
+
+
 static int iotpf_daemon(int argc, char *argv[])
 {
   int ret;
-  ret = ciscom_initialize();
+  cis_iotpf_configs iotpf_configs;
+#ifdef CIS_TWO_MCU
+  iotpf_configs.iotpf_mode = cis_iotpf_mode_at;
+#else
+  iotpf_configs.iotpf_mode = cis_iotpf_mode_api;
+#endif
+
+#if CIS_OPERATOR_CTCC
+    iotpf_configs.iotpf_operator = cis_iotpf_operator_ctcc;
+#else
+    iotpf_configs.iotpf_operator = cis_iotpf_operator_cmcc;
+#endif
+
+  ret = ciscom_initialize(&iotpf_configs);
   if (ret < 0)
     {
       LOGE("ciscom_initialize error");
       return -1;
     }
-#if CIS_TWO_MCU
+#ifdef CIS_TWO_MCU
   ret = cisat_initialize();
   if (ret < 0)
     {
@@ -88,7 +104,7 @@ static int iotpf_daemon(int argc, char *argv[])
       goto error;
     }
   cisat_readloop(ret);
-#elif CIS_ONE_MCU
+#else
   ret = cisapi_initialize();
   if (ret < 0)
     {
@@ -109,6 +125,7 @@ int iotpf_main(int argc, char *argv[])
 #endif
 {
   int ret;
+  pm_stay(PM_IDLE_DOMAIN, PM_STANDBY);
   ret = task_create(argv[0],
           CONFIG_SERVICES_IOTPF_PRIORITY,
           CONFIG_SERVICES_IOTPF_STACKSIZE,

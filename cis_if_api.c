@@ -1086,7 +1086,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
   cis_time_t g_lifetime = 720;
   /*init sample data*/
   prv_make_sample_data();
-  if (cis_init(&g_context, (void *)config_bin, config_size, NULL) != CIS_RET_OK)
+  if (cis_init(&g_context, (void *)config_bin, config_size) != CIS_RET_OK)
     {
       if (g_context != NULL)
         {
@@ -1186,7 +1186,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
             }
         }
       result = cis_pump(g_context, &tv.tv_sec);
-      LOGE("cis_pump result:%d,%d", result, tv.tv_sec);
+      LOGD("cis_pump result:%d,%d", result, tv.tv_sec);
       if (result == PUMP_RET_NOSLEEP)
         {
           tv.tv_sec = 0;
@@ -1220,7 +1220,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
                 }
               else if (numBytes > 0)
                 {
-                  LOGE("\r\n%d bytes received\r\n", numBytes);
+                  LOGD("%d bytes received", numBytes);
                   uint8_t* data = (uint8_t*)cis_malloc(numBytes);
                   cis_memcpy(data,buffer,numBytes);
                   struct st_net_packet *packet = (struct st_net_packet*)cis_malloc(sizeof(struct st_net_packet));
@@ -1269,6 +1269,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
 
 void *cisapi_onenet_thread(void *obj)
 {
+  pthread_setname_np(pthread_self(), "cisapi_thread");
   cisapi_sample_entry(config_hex, sizeof(config_hex));
   return NULL;
 }
