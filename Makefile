@@ -53,6 +53,9 @@ else
 ifeq ($(CONFIG_SERVICES_IOTPF_OPERATOR), "ctcc")
 CSRCS   += cis_if_api_ctcc.c
 CSRCS   += object_light_control.c
+ifeq ($(CONFIG_SERVICES_IOTPF_CTWING), y)
+CFLAGS += -DCIS_CTWING
+endif
 else
 CSRCS   += cis_if_api.c
 endif

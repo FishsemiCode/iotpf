@@ -37,4 +37,10 @@ config SERVICES_IOTPF_MODE
 		Which mode iotpf service works.
 		Now support "at" and "api"
 
+config SERVICES_IOTPF_CTWING
+    bool "ctwing support"
+    default n
+    ---help---
+        CTCC ctwing protocol support.
+
 endif # SERVICES_IOTPF

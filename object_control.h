@@ -1,5 +1,5 @@
 /****************************************************************************
- * external/services/iotpf/cis_if_api_ctcc.h
+ * external/services/iotpf/object_control.h
  *
  *     Copyright (C) 2019 FishSemi Inc. All rights reserved.
  *
@@ -32,37 +32,44 @@
  *
  ****************************************************************************/
 
-#ifndef _CIS_IF_API_CTCC_H_
-#define _CIS_IF_API_CTCC_H_
+#ifndef _CIS_OBJECT_CONTROL_H_
+#define _CIS_OBJECT_CONTROL_H_
 
-#include "cis_api.h"
-#include "cis_list.h"
+#if CIS_ONE_MCU && CIS_OPERATOR_CTCC
 
-typedef void (*cis_notify_callback_t)(void *context);
-typedef void (*cis_clean_callback_t)(void *context);
-typedef cis_ret_t (*cis_make_sample_data)(void *contextP);
+#include "object_light_control.h"
 
+static const object_callback_mapping g_object_callback_mapping [] = {
+  {
+    LIGHT_CONTROL_OBJECT_ID,
+    light_control_read,
+    light_control_write,
+    NULL,
+    light_control_observe,
+    light_control_notify,
+    light_control_clean,
+    light_control_make_sample_data
+  },
+};
 
-typedef struct
+const inline object_callback_mapping *get_object_callback_mappings(void)
 {
-  cis_oid_t objectId;
-  cis_read_callback_t onRead;
-  cis_write_callback_t onWrite;
-  cis_exec_callback_t onExec;
-  cis_observe_callback_t onObserve;
-  cis_notify_callback_t onObserveNotify;
-  cis_clean_callback_t onClean;
-  cis_make_sample_data makeSampleData;
-} object_callback_mapping;
+#ifdef CIS_CTWING
+  return g_object_callback_mapping;
+#else
+  return NULL;
+#endif
+}
 
-typedef struct
+const inline int get_object_callback_mapping_num(void)
 {
-  struct st_observe_info *next;
-  cis_listid_t mid;
-  cis_uri_t uri;
-  cis_observe_attr_t params;
-} st_observe_info;
+#ifdef CIS_CTWING
+  return sizeof(g_object_callback_mapping) / sizeof(object_callback_mapping);
+#else
+  return 0;
+#endif
+}
 
+#endif
 
-#endif//_CIS_IF_API_CTCC_H_
-
+#endif /* _CIS_OBJECT_CONTROL_H_ */

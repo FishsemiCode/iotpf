@@ -36,6 +36,7 @@
 #include "cis_api.h"
 #include "cis_log.h"
 #include "cis_if_api_ctcc.h"
+#include "object_light_control.h"
 
 static cis_list_t *light_control_inst;
 static st_observe_info *light_control_observe_list = NULL;
@@ -435,7 +436,7 @@ uint8_t light_control_observe(void *context, cis_uri_t *uri, bool flag, cis_mid_
   return CIS_RET_OK;
 }
 
-uint8_t light_control_notify(void *context)
+void light_control_notify(void *context)
 {
   st_observe_info *node = light_control_observe_list;
   cis_uri_t uri;
@@ -525,7 +526,6 @@ uint8_t light_control_notify(void *context)
         }
       node = (st_observe_info *)(node->next);
     }
-  return CIS_RET_OK;
 }
 
 void light_control_clean(void *contextP)
@@ -565,4 +565,20 @@ void light_control_clean(void *contextP)
       light_control_observe_list = (st_observe_info *)CIS_LIST_RM(light_control_observe_list, ((cis_list_t *)deleteObserveNode)->id, NULL);
       free(deleteObserveNode);
     }
+}
+
+cis_ret_t light_control_make_sample_data(void *contextP)
+{
+#ifdef CIS_CTWING
+  cis_addobject(contextP, LIGHT_CONTROL_OBJECT_ID, NULL, NULL);
+  st_object_t *lightControlObj = cis_findObject(contextP, LIGHT_CONTROL_OBJECT_ID);
+  if (lightControlObj == NULL)
+    {
+      LOGE("Failed to init light control object");
+      return CIS_RET_ERROR;
+    }
+  light_control_create(contextP, 0, lightControlObj);
+  light_control_create(contextP, 1, lightControlObj);
+#endif
+  return CIS_RET_OK;
 }

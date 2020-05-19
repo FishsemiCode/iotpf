@@ -35,7 +35,13 @@
 #ifndef _CIS_OBJECT_LIGHT_CONTROL_H_
 #define _CIS_OBJECT_LIGHT_CONTROL_H_
 
+#if CIS_ONE_MCU && CIS_OPERATOR_CTCC
+#include "cis_if_api_ctcc.h"
+#else
 #include "cis_api.h"
+#endif
+
+#define LIGHT_CONTROL_OBJECT_ID         (3311)
 
 uint8_t light_control_create(void *contextP, int instanceId, st_object_t *lightControlObj);
 uint8_t light_control_read(void *context, cis_uri_t *uri, cis_mid_t mid);
@@ -43,8 +49,7 @@ uint8_t light_control_observe(void *context, cis_uri_t *uri, bool flag, cis_mid_
 uint8_t light_control_write(void *context, cis_uri_t *uri, const cis_data_t *value, cis_attrcount_t attrcount, cis_mid_t mid);
 void light_control_notify(void *context);
 void light_control_clean(void *contextP);
-
-
+cis_ret_t light_control_make_sample_data(void *contextP);
 
 #endif//_CIS_OBJECT_LIGHT_CONTROL_H_
 

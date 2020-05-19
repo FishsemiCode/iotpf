@@ -46,7 +46,6 @@
 #if CIS_ONE_MCU
 #define MAX_PACKET_SIZE			(256)
 
-
 static const uint8_t config_hex[] =
 {
   0x13, 0x00, 0x59,
