@@ -44,6 +44,7 @@
 #include "cis_if_api_ctcc.h"
 #include "object_control.h"
 
+#include "iotpf_user.h"
 
 #if CIS_ONE_MCU && CIS_OPERATOR_CTCC
 
@@ -70,8 +71,12 @@ static uint8_t config_hex[] =
 static pthread_mutex_t g_reg_mutex;
 static pthread_cond_t g_reg_cond;
 static bool g_reg_status = false;
+static bool g_exit = false;
 
 void *g_context = NULL;
+
+static pthread_t g_user_thread_tid = -1;
+static user_thread_context_t g_user_thread_context;
 
 //////////////////////////////////////////////////////////////////////////
 //private funcation;
@@ -134,6 +139,7 @@ static cis_coapret_t cis_api_onWriteRaw(void *context, const uint8_t *data, uint
       bufLen += snprintf(buf + bufLen, 2 * length + 1 - bufLen, "%02X", data[i]);
     }
   LOGI("cis_api_onWriteRaw :%d,%s\n", length, buf);
+  cisapi_recv_data_from_server(&g_user_thread_context, data, length);
   free(buf);
   return CIS_RET_OK;
 }
@@ -295,40 +301,6 @@ int cisapi_initialize(void)
 
   cis_register_ctcc(g_context, g_lifetime, &callback);
 
-  pthread_mutex_lock(&g_reg_mutex);
-  while (!g_reg_status)
-    {
-      pthread_cond_wait(&g_reg_cond, &g_reg_mutex);
-    }
-  pthread_mutex_unlock(&g_reg_mutex);
-
-  LOGI("sleep 5 seconds before sending\n");
-  sleep(5);
-
-  // test data format [len][byte0][byte1]...[byte(len-1)]
-  uint8_t data1[] = {0x06, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36};
-  uint8_t data2[] = {0x05, 0x35, 0x34, 0x33, 0x32, 0x31};
-  uint8_t data3[] = {0x04, 0x47, 0x48, 0x49, 0x4a};
-
-  // test 3 times sending sleep 1s each time
-  LOGI("send for 1 time\n");
-  prv_observeNotify(g_context);
-  cis_notify_raw(g_context, data1, sizeof(data1));
-  sleep(1);
-  LOGI("send for 2 time\n");
-  prv_observeNotify(g_context);
-  cis_notify_raw(g_context, data2, sizeof(data2));
-  sleep(1);
-  LOGI("send for 3 time\n");
-  prv_observeNotify(g_context);
-  cis_notify_raw(g_context, data3, sizeof(data3));
-
-  while (1)
-    {
-      sleep(20);
-      prv_observeNotify(g_context);
-    }
-
   struct timespec time;
 
   time.tv_sec = 60;
@@ -340,6 +312,38 @@ int cisapi_initialize(void)
       pthread_cond_timedwait(&g_reg_cond, &g_reg_mutex, &time);
     }
   pthread_mutex_unlock(&g_reg_mutex);
+
+  LOGI("\n\n\nsleep 5 seconds before sending\n\n\n");
+  sleep(5);
+
+  g_user_thread_context.context = g_context;
+  pipe(g_user_thread_context.send_pipe_fd);
+  pipe(g_user_thread_context.recv_pipe_fd);
+
+  if (pthread_create(&g_user_thread_tid, NULL, cisapi_user_thread, &g_user_thread_context))
+    {
+      LOGE("%s: pthread_create (%s)\n", __func__, strerror(errno));
+      ret = -1;
+      goto clean;
+    }
+
+  while (1)
+    {
+      cisapi_send_data_to_server(&g_user_thread_context);
+      prv_observeNotify(g_context);
+      pthread_mutex_lock(&g_reg_mutex);
+      if (g_exit) {
+          pthread_mutex_unlock(&g_reg_mutex);
+          break;
+      }
+      pthread_mutex_unlock(&g_reg_mutex);
+    }
+
+clean:
+  close(g_user_thread_context.send_pipe_fd[0]);
+  close(g_user_thread_context.send_pipe_fd[1]);
+  close(g_user_thread_context.recv_pipe_fd[0]);
+  close(g_user_thread_context.recv_pipe_fd[1]);
 
   cis_unregister(g_context);
 

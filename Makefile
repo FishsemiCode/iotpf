@@ -53,6 +53,7 @@ else
 ifeq ($(CONFIG_SERVICES_IOTPF_OPERATOR), "ctcc")
 CSRCS   += cis_if_api_ctcc.c
 CSRCS   += object_light_control.c
+CSRCS   += iotpf_user.c
 ifeq ($(CONFIG_SERVICES_IOTPF_CTWING), y)
 CFLAGS += -DCIS_CTWING
 endif
@@ -61,6 +62,8 @@ CSRCS   += cis_if_api.c
 endif
 CFLAGS += -DCIS_ONE_MCU
 endif
+
+CFLAGS += -Wno-unused-function
 
 PROGNAME = iotpf
 include $(APPDIR)/Application.mk
