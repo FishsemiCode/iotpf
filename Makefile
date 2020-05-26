@@ -57,6 +57,9 @@ CSRCS   += iotpf_user.c
 ifeq ($(CONFIG_SERVICES_IOTPF_CTWING), y)
 CFLAGS += -DCIS_CTWING
 endif
+ifeq ($(CONFIG_SERVICES_IOTPF_CTWING_SPECIAL_OBJECT), y)
+CFLAGS += -DCIS_CTWING_SPECIAL_OBJECT
+endif
 else
 CSRCS   += cis_if_api.c
 endif

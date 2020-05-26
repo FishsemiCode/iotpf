@@ -43,4 +43,11 @@ config SERVICES_IOTPF_CTWING
     ---help---
         CTCC ctwing protocol support.
 
+config SERVICES_IOTPF_CTWING_SPECIAL_OBJECT
+    bool "ctwing support special object"
+    default n
+    select SERVICES_IOTPF_CTWING
+    ---help---
+        CTCC ctwing special object protocol support.
+
 endif # SERVICES_IOTPF

@@ -75,7 +75,8 @@ static bool g_exit = false;
 
 void *g_context = NULL;
 
-static pthread_t g_user_thread_tid = -1;
+static pthread_t g_user_send_thread_tid = -1;
+static pthread_t g_user_recv_thread_tid = -1;
 static user_thread_context_t g_user_thread_context;
 
 //////////////////////////////////////////////////////////////////////////
@@ -301,15 +302,10 @@ int cisapi_initialize(void)
 
   cis_register_ctcc(g_context, g_lifetime, &callback);
 
-  struct timespec time;
-
-  time.tv_sec = 60;
-  time.tv_nsec = 0;
-
   pthread_mutex_lock(&g_reg_mutex);
-  while (g_reg_status)
+  while (!g_reg_status)
     {
-      pthread_cond_timedwait(&g_reg_cond, &g_reg_mutex, &time);
+      pthread_cond_wait(&g_reg_cond, &g_reg_mutex);
     }
   pthread_mutex_unlock(&g_reg_mutex);
 
@@ -320,9 +316,16 @@ int cisapi_initialize(void)
   pipe(g_user_thread_context.send_pipe_fd);
   pipe(g_user_thread_context.recv_pipe_fd);
 
-  if (pthread_create(&g_user_thread_tid, NULL, cisapi_user_thread, &g_user_thread_context))
+  if (pthread_create(&g_user_send_thread_tid, NULL, cisapi_user_send_thread, &g_user_thread_context))
     {
-      LOGE("%s: pthread_create (%s)\n", __func__, strerror(errno));
+      LOGE("%s: pthread_create send (%s)\n", __func__, strerror(errno));
+      ret = -1;
+      goto clean;
+    }
+
+  if (pthread_create(&g_user_recv_thread_tid, NULL, cisapi_user_recv_thread, &g_user_thread_context))
+    {
+      LOGE("%s: pthread_create recv (%s)\n", __func__, strerror(errno));
       ret = -1;
       goto clean;
     }
@@ -338,6 +341,18 @@ int cisapi_initialize(void)
       }
       pthread_mutex_unlock(&g_reg_mutex);
     }
+
+  struct timespec time;
+
+  time.tv_sec = 60;
+  time.tv_nsec = 0;
+
+  pthread_mutex_lock(&g_reg_mutex);
+  while (g_reg_status)
+    {
+      pthread_cond_timedwait(&g_reg_cond, &g_reg_mutex, &time);
+    }
+  pthread_mutex_unlock(&g_reg_mutex);
 
 clean:
   close(g_user_thread_context.send_pipe_fd[0]);

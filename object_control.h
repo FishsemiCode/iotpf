@@ -39,7 +39,7 @@
 
 #include "object_light_control.h"
 
-static const object_callback_mapping g_object_callback_mapping [] = {
+const object_callback_mapping g_object_callback_mapping [] = {
   {
     LIGHT_CONTROL_OBJECT_ID,
     light_control_read,
@@ -54,7 +54,7 @@ static const object_callback_mapping g_object_callback_mapping [] = {
 
 const inline object_callback_mapping *get_object_callback_mappings(void)
 {
-#ifdef CIS_CTWING
+#ifdef CIS_CTWING_SPECIAL_OBJECT
   return g_object_callback_mapping;
 #else
   return NULL;
@@ -63,7 +63,7 @@ const inline object_callback_mapping *get_object_callback_mappings(void)
 
 const inline int get_object_callback_mapping_num(void)
 {
-#ifdef CIS_CTWING
+#ifdef CIS_CTWING_SPECIAL_OBJECT
   return sizeof(g_object_callback_mapping) / sizeof(object_callback_mapping);
 #else
   return 0;

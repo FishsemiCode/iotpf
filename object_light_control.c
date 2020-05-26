@@ -444,6 +444,7 @@ void light_control_notify(void *context)
   cis_list_t *pInstNode;
   int nbRes = sizeof(g_resList) / sizeof(uint16_t);
   int i;
+
   while (node != NULL)
     {
       if (node->mid == 0)
@@ -456,7 +457,7 @@ void light_control_notify(void *context)
         }
       pInstNode = light_control_inst;
       memcpy(&uri, &(node->uri), sizeof(cis_uri_t));
-      LOGD("%s notify:%d/%d/%d",
+      LOGI("\n\n\n------- %s notify:%d / %d / %d -------\n\n\n",
         __func__,
         node->uri.objectId,
         CIS_URI_IS_SET_INSTANCE(&node->uri) ? node->uri.instanceId : -1,
@@ -569,7 +570,8 @@ void light_control_clean(void *contextP)
 
 cis_ret_t light_control_make_sample_data(void *contextP)
 {
-#ifdef CIS_CTWING
+#ifdef CIS_CTWING_SPECIAL_OBJECT
+  LOGI("\n\n\n+++++++++++++++++++ make light sample +++++++++++++++++++++++++\n\n\n");
   cis_addobject(contextP, LIGHT_CONTROL_OBJECT_ID, NULL, NULL);
   st_object_t *lightControlObj = cis_findObject(contextP, LIGHT_CONTROL_OBJECT_ID);
   if (lightControlObj == NULL)

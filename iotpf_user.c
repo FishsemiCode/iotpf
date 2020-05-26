@@ -48,6 +48,8 @@
 
 #include "iotpf_user.h"
 
+#define REPORT_INTERVAL 5  // 5 seconds one report
+
 static pthread_mutex_t g_exit_mutex;
 static bool g_exit;
 
@@ -120,20 +122,19 @@ static void recv_data_from_server(user_thread_context_t *utc)
   free(udi.data);
 }
 
-void *cisapi_user_thread(void *obj)
+void *cisapi_user_send_thread(void *obj)
 {
   user_thread_context_t *utc = (user_thread_context_t *)obj;
   uint8_t data[6] = {0x05, 0x31, 0x32, 0x33, 0x34, 0x35};
 
   pthread_mutex_init(&g_exit_mutex, NULL);
-  pthread_setname_np(pthread_self(), "cisapi_user_thread");
+  pthread_setname_np(pthread_self(), "cisapi_user_send_thread");
   pthread_detach(pthread_self());
 
-  LOGI("\n\nentering into user thread\n\n");
+  LOGI("\n\nentering into user send thread\n\n");
 
   while (1)
     {
-      sleep(1);
       pthread_mutex_lock(&g_exit_mutex);
       if (g_exit)
         {
@@ -142,6 +143,31 @@ void *cisapi_user_thread(void *obj)
         }
       pthread_mutex_unlock(&g_exit_mutex);
       send_data_to_server(utc, data, sizeof(data));
+      sleep(REPORT_INTERVAL);
+    }
+
+  return NULL;
+}
+
+void *cisapi_user_recv_thread(void *obj)
+{
+  user_thread_context_t *utc = (user_thread_context_t *)obj;
+
+  pthread_mutex_init(&g_exit_mutex, NULL);
+  pthread_setname_np(pthread_self(), "cisapi_user_send_thread");
+  pthread_detach(pthread_self());
+
+  LOGI("\n\nentering into user recv thread\n\n");
+
+  while (1)
+    {
+      pthread_mutex_lock(&g_exit_mutex);
+      if (g_exit)
+        {
+          pthread_mutex_unlock(&g_exit_mutex);
+          break;
+        }
+      pthread_mutex_unlock(&g_exit_mutex);
       recv_data_from_server(utc);
     }
 

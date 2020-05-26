@@ -53,7 +53,8 @@ typedef struct user_thread_context_s
 void cisapi_send_data_to_server(user_thread_context_t *utc);
 void cisapi_recv_data_from_server(user_thread_context_t *utc,
                                   const void *data, uint32_t data_len);
-void *cisapi_user_thread(void *obj);
+void *cisapi_user_send_thread(void *obj);
+void *cisapi_user_recv_thread(void *obj);
 
 #endif
 
