@@ -41,6 +41,7 @@
 #include <sys/select.h>
 #include <string.h>
 
+#include "at_api.h"
 #include "cis_internals.h"
 #include "cis_log.h"
 #include "cis_api.h"
@@ -49,9 +50,14 @@
 #include "iotpf_user.h"
 
 #define REPORT_INTERVAL 5  // 5 seconds one report
+#define GPS_BUF_SZ 256
 
 static pthread_mutex_t g_exit_mutex;
 static bool g_exit;
+
+static pthread_mutex_t g_gps_mutex;
+static pthread_cond_t g_gps_cond;
+static char g_gps_data[GPS_BUF_SZ];
 
 static void stop_user_thread(void)
 {
@@ -72,7 +78,8 @@ static void send_data_to_server(user_thread_context_t *utc,
     }
   udi.data_len = data_len;
   memcpy(udi.data, data, data_len);
-  write(utc->send_pipe_fd[1], &udi, sizeof(user_data_info_t));
+
+  file_write(&utc->send_pipe_file, &udi, sizeof(user_data_info_t));
 }
 
 void cisapi_send_data_to_server(user_thread_context_t *utc)
@@ -108,7 +115,7 @@ static void recv_data_from_server(user_thread_context_t *utc)
   int bufLen = 0;
   int i;
 
-  read(utc->recv_pipe_fd[0], &udi, sizeof(user_data_info_t));
+  file_read(&utc->recv_pipe_file, &udi, sizeof(user_data_info_t));
 
   buf = (char *)malloc(2 * udi.data_len + 1);
   memset(buf, 0x0, 2 * udi.data_len + 1);
@@ -122,8 +129,216 @@ static void recv_data_from_server(user_thread_context_t *utc)
   free(udi.data);
 }
 
+#define HEARTBEAT_TIMER_SIGNAL 17
+
+#ifdef CONFIG_CAN_PASS_STRUCTS
+static void heartbeat_callback(union sigval value)
+#else
+static void heartbeat_callback(FAR void *sival_ptr)
+#endif
+{
+  uint8_t data[6] = {0x05, 0x40, 0x41, 0x42, 0x43, 0x44};
+
+#ifdef CONFIG_CAN_PASS_STRUCTS
+  user_thread_context_t *utc = (user_thread_context_t *)value.sival_int;
+#else
+  user_thread_context_t *utc = (user_thread_context_t *)sival_ptr;
+#endif
+
+  LOGI("@@@@@@@@@@@ heartbeat callback utc: 0x%x and send heartbeat @@@@@@@@@@@\n", (unsigned int)utc);
+  send_data_to_server(utc, data, sizeof(data));
+}
+
+static timer_t create_heartbeat_timer(user_thread_context_t *utc)
+{
+  int ret;
+  timer_t timerid;
+  struct sigevent notify;
+  struct itimerspec timer;
+
+  LOGI("@@@@@@@@@@@ Create heartbeat timer utc 0x%x @@@@@@@@@@@@\n", (unsigned int)utc);
+
+  file_detach(utc->send_pipe_fd[1], &utc->send_pipe_file);
+
+  notify.sigev_notify            = SIGEV_THREAD;
+  notify.sigev_signo             = HEARTBEAT_TIMER_SIGNAL;
+  notify.sigev_value.sival_int   = (int)utc;
+  notify.sigev_notify_function   = heartbeat_callback;
+  notify.sigev_notify_attributes = NULL;
+
+  ret = timer_create(CLOCK_REALTIME, &notify, &timerid);
+  if (ret != 0)
+    {
+      LOGE("Failed to create timer!\n");
+      return NULL;
+    }
+
+  LOGI("@@@@@@@@@@@ Start heartbeat timer @@@@@@@@@@@@@\n");
+  timer.it_value.tv_sec     = 5;
+  timer.it_value.tv_nsec    = 0;
+  timer.it_interval.tv_sec  = 5;
+  timer.it_interval.tv_nsec = 0;
+  ret = timer_settime(timerid, 0, &timer, NULL);
+  if (ret != 0)
+    {
+      LOGE("Failed to start timer!\n");
+      return NULL;
+    }
+
+  return timerid;
+}
+
+static void destroy_heartbeat_timer(timer_t timerid)
+{
+  LOGI("@@@@@@@@@@@ Destroy heartbeat timer @@@@@@@@@@@@\n");
+  timer_delete(timerid);
+}
+
+static void disconnect_from_server(user_thread_context_t *utc)
+{
+  core_updatePumpState(utc->context, PUMP_STATE_DISCONNECTED);
+  cisapi_wakeup_pump();
+  sleep(5);
+  ciscom_setRadioPower(false);
+  LOGI("\n\nDisconnect from server !\n\n");
+}
+
+static void connect_to_server(user_thread_context_t *utc)
+{
+  ciscom_setRadioPower(true);
+  while (!ciscom_isRegistered(ciscom_getRegisteredStaus())) {
+      LOGI("############## CEREG not ready #################\n");
+      sleep(1);
+  }
+  cisapi_wakeup_pump();
+  sleep(5);
+  LOGI("\n\nConnect to server !\n\n");
+}
+
+static void handle_gprmc(const char *s)
+{
+  int ret;
+  char *p;
+  char *ignore;
+  bool ready = false;
+  char *line = (char *)s;
+  char *p_longitude, *p_latitude, *p_time, *p_date;
+
+  ret = at_tok_nextstr(&line, &p);
+  if (ret < 0)
+    {
+      return;
+    }
+  ret = at_tok_nextstr(&line, &p_time);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &p);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  if (*p == 'A' || *p == 'V') // If outside, just check p = 'A'
+    {
+      ready = true;
+    }
+  ret = at_tok_nextstr(&line, &p_latitude);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &p);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &p_longitude);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &ignore);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &ignore);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &ignore);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  ret = at_tok_nextstr(&line, &p_date);
+  if (ret < 0)
+    {
+      return;
+    }
+
+  if (ready)
+    {
+      struct tm t;
+      time_t seconds;
+      uint64_t mSeconds;
+      char buf[4] = {0};
+
+      strncpy(buf, p_time + 4, 2);
+      t.tm_sec = atoi(buf);
+      strncpy(buf, p_time + 2, 2);
+      t.tm_min = atoi(buf);
+      strncpy(buf, p_time, 2);
+      t.tm_hour = atoi(buf);
+      strncpy(buf, p_date, 2);
+      t.tm_mday = atoi(buf);
+      strncpy(buf, p_date + 2, 2);
+      t.tm_mon = atoi(buf);
+      t.tm_mon -= 1;
+      strncpy(buf, p_date + 4, 2);
+      t.tm_year = atoi(buf) + 100;
+      seconds = mktime(&t);
+      strncpy(buf, p_time + 7, 2);
+      mSeconds = (uint64_t)(seconds) * 1000 + atoi(buf);
+      pthread_mutex_lock(&g_gps_mutex);
+      sprintf(g_gps_data, "%s,%s,%s,%s,%013llu,%u",
+              p_time, p_latitude, p_longitude, p_date, mSeconds, seconds);
+      pthread_cond_signal(&g_gps_cond);
+      pthread_mutex_unlock(&g_gps_mutex);
+    }
+}
+
+static void do_gps_capture(int fd)
+{
+  pthread_mutex_init(&g_gps_mutex, NULL);
+  pthread_cond_init(&g_gps_cond, NULL);
+  start_gps(fd, false);
+
+  // you can do your gps job here, for example caputure gps data for 10 minutes
+  pthread_mutex_lock(&g_gps_mutex);
+  pthread_cond_wait(&g_gps_cond, &g_gps_mutex);
+  LOGI("\n\n@@@@@@@@@@ gps data = %s @@@@@@@@@@@@@\n\n", g_gps_data);
+  pthread_mutex_unlock(&g_gps_mutex);
+
+  stop_gps(fd);
+  pthread_mutex_destroy(&g_gps_mutex);
+  pthread_cond_destroy(&g_gps_cond);
+}
+
 void *cisapi_user_send_thread(void *obj)
 {
+  int at_fd;
+  timer_t timerid;
   user_thread_context_t *utc = (user_thread_context_t *)obj;
   uint8_t data[6] = {0x05, 0x31, 0x32, 0x33, 0x34, 0x35};
 
@@ -131,7 +346,14 @@ void *cisapi_user_send_thread(void *obj)
   pthread_setname_np(pthread_self(), "cisapi_user_send_thread");
   pthread_detach(pthread_self());
 
-  LOGI("\n\nentering into user send thread\n\n");
+  LOGI("\n\nentering into user send thread send_pipe = %d\n\n", utc->send_pipe_fd[1]);
+  if (0)
+    timerid = create_heartbeat_timer(utc);
+  else
+    file_detach(utc->send_pipe_fd[1], &utc->send_pipe_file);
+
+  at_fd = ciscom_getATHandle();
+  register_indication(at_fd, "$GPRMC", handle_gprmc);
 
   while (1)
     {
@@ -144,8 +366,14 @@ void *cisapi_user_send_thread(void *obj)
       pthread_mutex_unlock(&g_exit_mutex);
       send_data_to_server(utc, data, sizeof(data));
       sleep(REPORT_INTERVAL);
+      disconnect_from_server(utc);
+      do_gps_capture(at_fd);
+      sleep(REPORT_INTERVAL);
+      connect_to_server(utc);
     }
 
+  if (0)
+  destroy_heartbeat_timer(timerid);
   return NULL;
 }
 
@@ -156,6 +384,8 @@ void *cisapi_user_recv_thread(void *obj)
   pthread_mutex_init(&g_exit_mutex, NULL);
   pthread_setname_np(pthread_self(), "cisapi_user_send_thread");
   pthread_detach(pthread_self());
+
+  file_detach(utc->recv_pipe_fd[0], &utc->recv_pipe_file);
 
   LOGI("\n\nentering into user recv thread\n\n");
 

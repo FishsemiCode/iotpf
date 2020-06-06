@@ -35,6 +35,8 @@
 #ifndef _IOTPF_USER_H_
 #define _IOTPF_USER_H_
 
+#include <nuttx/fs/fs.h>
+
 #if CIS_ONE_MCU && CIS_OPERATOR_CTCC
 
 typedef struct user_data_info_s
@@ -48,6 +50,8 @@ typedef struct user_thread_context_s
   void *context;
   int  send_pipe_fd[2];
   int  recv_pipe_fd[2];
+  struct file send_pipe_file;
+  struct file recv_pipe_file;
 } user_thread_context_t;
 
 void cisapi_send_data_to_server(user_thread_context_t *utc);
