@@ -59,5 +59,5 @@ endif
 CFLAGS += -DCIS_ONE_MCU
 endif
 
-PROGNAME = iotpf(EXEEXT)
+PROGNAME = iotpf
 include $(APPDIR)/Application.mk
