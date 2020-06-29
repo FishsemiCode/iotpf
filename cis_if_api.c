@@ -69,7 +69,7 @@ static const uint8_t config_hex[] =
 
 static struct st_observe_info *g_observeList = NULL;
 
-void *g_context = NULL;
+static void *g_cmcc_context;
 static bool g_shutdown = false;
 static bool g_doUnregister = false;
 static bool g_doRegister = false;
@@ -805,7 +805,7 @@ static cis_coapret_t prv_observeResponse(void *context, cis_uri_t *uri, bool fla
         observe_new->uri.objectId,
         CIS_URI_IS_SET_INSTANCE(&observe_new->uri) ? observe_new->uri.instanceId : -1,
         CIS_URI_IS_SET_RESOURCE(&observe_new->uri) ? observe_new->uri.resourceId : -1);
-      cis_response(g_context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE);
+      cis_response(g_cmcc_context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE);
     }
   else
     {
@@ -833,7 +833,7 @@ static cis_coapret_t prv_observeResponse(void *context, cis_uri_t *uri, bool fla
             CIS_URI_IS_SET_RESOURCE(&delnode->uri) ? delnode->uri.resourceId : -1);
 
           cis_free(delnode);
-          cis_response(g_context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE);
+          cis_response(g_cmcc_context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE);
         }
       else
         {
@@ -895,7 +895,7 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         break;
       case CIS_EVENT_UPDATE_NEED:
         LOGD("cis_on_event need to update,reserve time:%ds\n", (int32_t)param);
-        cis_update_reg(g_context, LIFETIME_INVALID, false);
+        cis_update_reg(g_cmcc_context, LIFETIME_INVALID, false);
         break;
       case CIS_EVENT_REG_SUCCESS:
         {
@@ -1085,11 +1085,11 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
   cis_time_t g_lifetime = 720;
   /*init sample data*/
   prv_make_sample_data();
-  if (cis_init(&g_context, (void *)config_bin, config_size) != CIS_RET_OK)
+  if (cis_init(&g_cmcc_context, (void *)config_bin, config_size) != CIS_RET_OK)
     {
-      if (g_context != NULL)
+      if (g_cmcc_context != NULL)
         {
-          cis_deinit(&g_context);
+          cis_deinit(&g_cmcc_context);
         }
       LOGE("cis entry init failed.\n");
       return -1;
@@ -1130,7 +1130,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
       rescount.attrCount = obj->attrCount;
       rescount.actCount = obj->actCount;
 
-      cis_addobject(g_context, oid, &bitmap, &rescount);
+      cis_addobject(g_cmcc_context, oid, &bitmap, &rescount);
       cis_free(instPtr);
     }
 
@@ -1147,19 +1147,19 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
       int result;
       int netFd = -1;
       int maxfd = 0;
-      st_context_t *ctx = (st_context_t *)g_context;
+      st_context_t *ctx = (st_context_t *)g_cmcc_context;
       tv.tv_sec = 60;
       tv.tv_usec = 0;
       {
         if (g_doRegister)
           {
             g_doRegister = false;
-            cis_register(g_context, g_lifetime, &callback);
+            cis_register(g_cmcc_context, g_lifetime, &callback);
           }
         if (g_doUnregister)
           {
             g_doUnregister = false;
-            cis_unregister(g_context);
+            cis_unregister(g_cmcc_context);
             struct st_observe_info* delnode;
             while (g_observeList != NULL)
               {
@@ -1184,7 +1184,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
               maxfd = ctx->pNetContext->sock;
             }
         }
-      result = cis_pump(g_context, &tv.tv_sec);
+      result = cis_pump(g_cmcc_context, &tv.tv_sec);
       LOGD("cis_pump result:%d,%d", result, tv.tv_sec);
       if (result == PUMP_RET_NOSLEEP)
         {
@@ -1249,13 +1249,13 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
                 }
               cis_uri_t uriLocal;
               uriLocal = node->uri;
-              prv_observeNotify(g_context, &uriLocal, node->mid);
+              prv_observeNotify(g_cmcc_context, &uriLocal, node->mid);
               node = node->next;
             }
         }
     }
 
-  cis_deinit(&g_context);
+  cis_deinit(&g_cmcc_context);
   struct st_observe_info *delnode;
   while (g_observeList != NULL)
     {

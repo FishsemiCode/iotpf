@@ -73,7 +73,7 @@ static pthread_cond_t g_reg_cond;
 static bool g_reg_status = false;
 static bool g_exit = false;
 
-void *g_context = NULL;
+static void *g_ctcc_context;
 
 static pthread_t g_user_send_thread_tid = -1;
 static pthread_t g_user_recv_thread_tid = -1;
@@ -286,21 +286,21 @@ int cisapi_initialize(void)
 
   LOGD("cisapi_initialize enter\n");
 
-  if (cis_init(&g_context, (void *)config_hex, sizeof(config_hex)) != CIS_RET_OK)
+  if (cis_init(&g_ctcc_context, (void *)config_hex, sizeof(config_hex)) != CIS_RET_OK)
     {
-      if (g_context != NULL)
+      if (g_ctcc_context != NULL)
         {
-          cis_deinit(&g_context);
+          cis_deinit(&g_ctcc_context);
         }
       LOGE("cis entry init failed.\n");
       return -1;
     }
 
-  prv_make_sample_data(g_context);
+  prv_make_sample_data(g_ctcc_context);
 
   cis_pump_initialize();
 
-  cis_register_ctcc(g_context, g_lifetime, &callback);
+  cis_register_ctcc(g_ctcc_context, g_lifetime, &callback);
 
   pthread_mutex_lock(&g_reg_mutex);
   while (!g_reg_status)
@@ -312,7 +312,7 @@ int cisapi_initialize(void)
   LOGI("\n\n\nsleep 5 seconds before sending\n\n\n");
   sleep(5);
 
-  g_user_thread_context.context = g_context;
+  g_user_thread_context.context = g_ctcc_context;
   pipe(g_user_thread_context.send_pipe_fd);
   pipe(g_user_thread_context.recv_pipe_fd);
 
@@ -333,7 +333,7 @@ int cisapi_initialize(void)
   while (1)
     {
       cisapi_send_data_to_server(&g_user_thread_context);
-      prv_observeNotify(g_context);
+      prv_observeNotify(g_ctcc_context);
       pthread_mutex_lock(&g_reg_mutex);
       if (g_exit) {
           pthread_mutex_unlock(&g_reg_mutex);
@@ -360,10 +360,10 @@ clean:
   close(g_user_thread_context.recv_pipe_fd[0]);
   close(g_user_thread_context.recv_pipe_fd[1]);
 
-  cis_unregister(g_context);
+  cis_unregister(g_ctcc_context);
 
-  prv_clean_sample_data(g_context);
-  cis_deinit(g_context);
+  prv_clean_sample_data(g_ctcc_context);
+  cis_deinit(g_ctcc_context);
 
   pthread_mutex_destroy(&g_reg_mutex);
   pthread_cond_destroy(&g_reg_cond);
