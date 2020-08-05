@@ -1,5 +1,5 @@
 /****************************************************************************
- * external/services/iotpf/cis_if_api.h
+ * external/services/iotpf/cis_if_api_cmcc.h
  *
  *     Copyright (C) 2019 FishSemi Inc. All rights reserved.
  *
@@ -32,12 +32,11 @@
  *
  ****************************************************************************/
 
-#ifndef _CIS_IF_API_H_
-#define _CIS_IF_API_H_
+#ifndef _CIS_IF_API_CMCC_H_
+#define _CIS_IF_API_CMCC_H_
 
 #include "cis_api.h"
 #include "cis_list.h"
-
 
 #define SAMPLE_OBJECT_MAX       2
 
@@ -50,8 +49,6 @@
 #define SAMPLE_B_INSTANCE_COUNT        5
 #define SAMPLE_B_INSTANCE_BITMAP      "10000"
 
-
-
 typedef struct st_sample_object
 {
   cis_oid_t oid;
@@ -62,7 +59,6 @@ typedef struct st_sample_object
   const cis_rid_t *actListPtr;
   uint16_t actCount;
 }st_sample_object;
-
 
 //////////////////////////////////////////////////////////////////////////
 //a object
@@ -76,14 +72,12 @@ typedef struct st_object_a
   uint8_t update;
 }st_object_a;
 
-
 typedef struct st_instance_a
 {
   cis_iid_t instId;
   bool enabled;
   st_object_a instance;
 }st_instance_a;
-
 
 enum
 {
@@ -111,7 +105,6 @@ static const cis_rid_t const_ActIds_a[] =
   actionA_1,
 };
 
-
 //////////////////////////////////////////////////////////////////////////
 //b object
 
@@ -126,14 +119,12 @@ typedef struct st_object_b
   uint8_t update;
 }st_object_b;
 
-
 typedef struct st_instance_b
 {
   cis_iid_t instId;
   bool    enabled;
   st_object_b instance;
 }st_instance_b;
-
 
 enum
 {
@@ -147,14 +138,12 @@ enum
   actionB_1	        = 5523,
 };
 
-
 static const cis_rid_t const_AttrIds_b[] =
 {
   attributeB_intValue,
   attributeB_floatValue,
   attributeB_stringValue,
 };
-
 
 static const cis_rid_t const_ActIds_b[] =
 {
@@ -170,4 +159,4 @@ struct st_observe_info
   cis_observe_attr_t params;
 };
 
-#endif//_CIS_IF_API_H_
+#endif//_CIS_IF_API_CMCC_H_

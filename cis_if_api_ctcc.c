@@ -145,7 +145,6 @@ static cis_coapret_t cis_api_onWriteRaw(void *context, const uint8_t *data, uint
   return CIS_RET_OK;
 }
 
-
 static cis_coapret_t cis_api_onRead(void *context, cis_uri_t *uri, cis_mid_t mid)
 {
   int i = 0;
@@ -182,7 +181,6 @@ static cis_coapret_t cis_api_onWrite(void *context, cis_uri_t *uri, const cis_da
   return CIS_RET_ERROR;
 }
 
-
 static cis_coapret_t cis_api_onExec(void *context, cis_uri_t *uri, const uint8_t *value, uint32_t length, cis_mid_t mid)
 {
   int i = 0;
@@ -200,7 +198,6 @@ static cis_coapret_t cis_api_onExec(void *context, cis_uri_t *uri, const uint8_t
 
   return CIS_RET_ERROR;
 }
-
 
 static cis_coapret_t cis_api_onObserve(void *context, cis_uri_t *uri, bool flag, cis_mid_t mid)
 {
@@ -220,6 +217,15 @@ static cis_coapret_t cis_api_onObserve(void *context, cis_uri_t *uri, bool flag,
   return CIS_RET_ERROR;
 }
 
+static cis_coapret_t cis_api_onDiscovery(void *context, cis_uri_t *uri, cis_mid_t mid)
+{
+  return CIS_RET_OK;
+}
+
+static cis_coapret_t cis_api_onSetParams(void *context, cis_uri_t *uri, cis_observe_attr_t parameters, cis_mid_t mid)
+{
+  return CIS_RET_OK;
+}
 
 static void prv_observeNotify(void *contextP)
 {
@@ -273,13 +279,15 @@ int cisapi_initialize(void)
 {
   int ret;
   cis_time_t g_lifetime = 3600;
-  cis_callback_ctcc_t callback;
+  cis_callback_t callback;
   callback.onRead = cis_api_onRead;
   callback.onWrite = cis_api_onWrite;
   callback.onExec = cis_api_onExec;
   callback.onObserve = cis_api_onObserve;
   callback.onEvent = cis_api_onEvent;
   callback.onWriteRaw = cis_api_onWriteRaw;
+  callback.onDiscover = cis_api_onDiscovery;
+  callback.onSetParams = cis_api_onSetParams;
 
   pthread_mutex_init(&g_reg_mutex, NULL);
   pthread_cond_init(&g_reg_cond, NULL);
@@ -300,7 +308,7 @@ int cisapi_initialize(void)
 
   cis_pump_initialize();
 
-  cis_register_ctcc(g_ctcc_context, g_lifetime, &callback);
+  cis_register(g_ctcc_context, g_lifetime, &callback);
 
   pthread_mutex_lock(&g_reg_mutex);
   while (!g_reg_status)

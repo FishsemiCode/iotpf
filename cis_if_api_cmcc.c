@@ -1,5 +1,5 @@
 /****************************************************************************
- * external/services/iotpf/cis_if_api.c
+ * external/services/iotpf/cis_if_api_cmcc.c
  *
  *     Copyright (C) 2019 FishSemi Inc. All rights reserved.
  *
@@ -41,7 +41,7 @@
 
 #include "cis_log.h"
 #include "cis_api.h"
-#include "cis_if_api.h"
+#include "cis_if_api_cmcc.h"
 
 #if CIS_ONE_MCU
 #define MAX_PACKET_SIZE			(256)
@@ -1073,7 +1073,7 @@ static void prv_make_sample_data(void)
 int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
 {
   int index = 0;
-  cis_callback_t callback;
+  cis_callback_cmcc_t callback;
   callback.onRead = cis_api_onRead;
   callback.onWrite = cis_api_onWrite;
   callback.onExec = cis_api_onExec;
@@ -1154,7 +1154,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
         if (g_doRegister)
           {
             g_doRegister = false;
-            cis_register(g_cmcc_context, g_lifetime, &callback);
+            cis_register_cmcc(g_cmcc_context, g_lifetime, &callback);
           }
         if (g_doUnregister)
           {

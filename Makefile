@@ -61,7 +61,7 @@ ifeq ($(CONFIG_SERVICES_IOTPF_CTWING_SPECIAL_OBJECT), y)
 CFLAGS += -DCIS_CTWING_SPECIAL_OBJECT
 endif
 else
-CSRCS   += cis_if_api.c
+CSRCS   += cis_if_api_cmcc.c
 endif
 CFLAGS += -DCIS_ONE_MCU
 endif
