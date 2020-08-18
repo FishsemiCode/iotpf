@@ -40,8 +40,8 @@
 
 #define SAMPLE_OBJECT_MAX       2
 
-#define SAMPLE_OID_A	        (3311)
-#define SAMPLE_OID_B		    (3340)
+#define SAMPLE_OID_A            (3311)
+#define SAMPLE_OID_B            (3340)
 
 #define SAMPLE_A_INSTANCE_COUNT        3
 #define SAMPLE_A_INSTANCE_BITMAP      "100"
@@ -81,16 +81,15 @@ typedef struct st_instance_a
 
 enum
 {
-  attributeA_intValue	    = 5852,
-  attributeA_floatValue	= 5820,
-  attributeA_stringValue	= 5701,
+  attributeA_intValue        = 5852,
+  attributeA_floatValue      = 5820,
+  attributeA_stringValue     = 5701,
 };
 
 enum
 {
-  actionA_1	        = 100,
+  actionA_1         = 100,
 };
-
 
 static const cis_rid_t const_AttrIds_a[] =
 {
@@ -98,7 +97,6 @@ static const cis_rid_t const_AttrIds_a[] =
   attributeA_floatValue,
   attributeA_stringValue,
 };
-
 
 static const cis_rid_t const_ActIds_a[] =
 {
@@ -128,14 +126,14 @@ typedef struct st_instance_b
 
 enum
 {
-  attributeB_intValue	= 5501,
-  attributeB_floatValue	= 5544,
-  attributeB_stringValue	= 5750,
+  attributeB_intValue       = 5501,
+  attributeB_floatValue     = 5544,
+  attributeB_stringValue    = 5750,
 };
 
 enum
 {
-  actionB_1	        = 5523,
+  actionB_1         = 5523,
 };
 
 static const cis_rid_t const_AttrIds_b[] =
@@ -149,7 +147,6 @@ static const cis_rid_t const_ActIds_b[] =
 {
   actionB_1,
 };
-
 
 struct st_observe_info
 {

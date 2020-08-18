@@ -37,6 +37,12 @@ config SERVICES_IOTPF_MODE
 		Which mode iotpf service works.
 		Now support "at" and "api"
 
+config SERVICES_IOTPF_OTA_UPDATE
+    bool "OTA update"
+    default n
+    ---help---
+        Enable the OTA update
+
 config SERVICES_IOTPF_CTWING
     bool "ctwing support"
     default n

@@ -42,9 +42,11 @@
 #include "cis_log.h"
 #include "cis_api.h"
 #include "cis_if_api_cmcc.h"
+#include "cis_internals.h"
+
 
 #if CIS_ONE_MCU
-#define MAX_PACKET_SIZE			(256)
+#define MAX_PACKET_SIZE        (256)
 
 static const uint8_t config_hex[] =
 {
@@ -74,7 +76,6 @@ static bool g_shutdown = false;
 static bool g_doUnregister = false;
 static bool g_doRegister = false;
 
-
 static cis_time_t g_notifyLast = 0;
 
 static st_sample_object g_objectList[SAMPLE_OBJECT_MAX];
@@ -88,7 +89,6 @@ void cisapi_wakeup_pump(void)
 {
   write(g_cisapi_pip_fd[1], "w", 1);
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 //private funcation;
@@ -298,8 +298,6 @@ static void prv_observeNotify(void *context, cis_uri_t *uri, cis_mid_t mid)
     }
   cisapi_wakeup_pump();
 }
-
-
 
 static cis_coapret_t prv_readResponse(void *context, cis_uri_t *uri, cis_mid_t mid)
 {
@@ -512,7 +510,6 @@ static cis_coapret_t prv_readResponse(void *context, cis_uri_t *uri, cis_mid_t m
   return CIS_RET_OK;
 }
 
-
 static cis_coapret_t prv_discoverResponse(void *context, cis_uri_t *uri, cis_mid_t mid)
 {
   uint8_t index;
@@ -586,7 +583,6 @@ static cis_coapret_t prv_discoverResponse(void *context, cis_uri_t *uri, cis_mid
   cisapi_wakeup_pump();
   return CIS_RET_OK;
 }
-
 
 static cis_coapret_t prv_writeResponse(void *context, cis_uri_t *uri, const cis_data_t *value, cis_attrcount_t count, cis_mid_t mid)
 {
@@ -689,7 +685,6 @@ static cis_coapret_t prv_writeResponse(void *context, cis_uri_t *uri, const cis_
   return CIS_RET_OK;
 }
 
-
 static cis_coapret_t prv_execResponse(void *context, cis_uri_t *uri, const uint8_t *value, uint32_t length, cis_mid_t mid)
 {
   uint8_t index;
@@ -755,7 +750,6 @@ static cis_coapret_t prv_execResponse(void *context, cis_uri_t *uri, const uint8
   cisapi_wakeup_pump();
   return CIS_RET_OK;
 }
-
 
 static cis_coapret_t prv_paramsResponse(void *context, cis_uri_t *uri, cis_observe_attr_t parameters, cis_mid_t mid)
 {
@@ -1069,11 +1063,10 @@ static void prv_make_sample_data(void)
     }
 }
 
-
 int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
 {
   int index = 0;
-  cis_callback_cmcc_t callback;
+  cis_callback_t callback;
   callback.onRead = cis_api_onRead;
   callback.onWrite = cis_api_onWrite;
   callback.onExec = cis_api_onExec;
@@ -1154,7 +1147,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
         if (g_doRegister)
           {
             g_doRegister = false;
-            cis_register_cmcc(g_cmcc_context, g_lifetime, &callback);
+            cis_register(g_cmcc_context, g_lifetime, &callback);
           }
         if (g_doUnregister)
           {
@@ -1199,15 +1192,15 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
       else if (result > 0)
         {
           if(FD_ISSET(g_cisapi_pip_fd[0], &readfds))
-			{
-			  char c[2];
+            {
+              char c[2];
               read(g_cisapi_pip_fd[0], c, 1);
               if (c[0] == 'q')
                 {
                   LOGE("!!!!!!!!cisapi_onenet_thread quit");
                   break;
                 }
-			}
+            }
           if (netFd > 0 && FD_ISSET(netFd, &readfds))
             {
               uint8_t buffer[MAX_PACKET_SIZE];
