@@ -318,7 +318,7 @@ uint8_t light_control_write(void *context, cis_uri_t *uri, const cis_data_t *val
           light_control_data_t *targetP = (light_control_data_t *)pInstNode;
           for (i = 0; i < attrcount; i++)
             {
-              LOGD("%s, resId:%d,%d\n", __func__, value[i].id, value[i].type);
+              LOGD("%s, resId:%d,%d", __func__, value[i].id, value[i].type);
               switch (value[i].id)
                 {
                   case LIGHT_CONTROL_RESOURCE_ID_ONOFF:
@@ -420,7 +420,7 @@ uint8_t light_control_observe(void *context, cis_uri_t *uri, bool flag, cis_mid_
       if (delnode != NULL)
         {
           light_control_observe_list = (st_observe_info *)cis_list_remove((cis_list_t *)light_control_observe_list, delnode->mid, (cis_list_t **)&delnode);
-          LOGD("cis_on_observe cancel: %d/%d/%d\n",
+          LOGD("cis_on_observe cancel: %d/%d/%d",
             delnode->uri.objectId,
             CIS_URI_IS_SET_INSTANCE(&delnode->uri) ? delnode->uri.instanceId : -1,
             CIS_URI_IS_SET_RESOURCE(&delnode->uri) ? delnode->uri.resourceId : -1);
@@ -457,7 +457,7 @@ void light_control_notify(void *context)
         }
       pInstNode = light_control_inst;
       memcpy(&uri, &(node->uri), sizeof(cis_uri_t));
-      LOGI("\n\n\n------- %s notify:%d / %d / %d -------\n\n\n",
+      LOGI("------- %s notify:%d / %d / %d -------",
         __func__,
         node->uri.objectId,
         CIS_URI_IS_SET_INSTANCE(&node->uri) ? node->uri.instanceId : -1,
@@ -489,7 +489,7 @@ void light_control_notify(void *context)
         {
           while (pInstNode)
             {
-              LOGD("btxbtx %d,%d\n", pInstNode->id, uri.instanceId);
+              LOGD("%d,%d", pInstNode->id, uri.instanceId);
               if (((light_control_data_t *)pInstNode)->instanceId == uri.instanceId)
                 {
                   for (i = 0; i < nbRes; i++)
@@ -571,7 +571,7 @@ void light_control_clean(void *contextP)
 cis_ret_t light_control_make_sample_data(void *contextP)
 {
 #ifdef CIS_CTWING_SPECIAL_OBJECT
-  LOGI("\n\n\n+++++++++++++++++++ make light sample +++++++++++++++++++++++++\n\n\n");
+  LOGI("+++++++++++++++++++ make light sample +++++++++++++++++++++++++");
   cis_addobject(contextP, LIGHT_CONTROL_OBJECT_ID, NULL, NULL);
   st_object_t *lightControlObj = cis_findObject(contextP, LIGHT_CONTROL_OBJECT_ID);
   if (lightControlObj == NULL)

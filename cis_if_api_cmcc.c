@@ -821,7 +821,7 @@ static cis_coapret_t prv_observeResponse(void *context, cis_uri_t *uri, bool fla
       if (delnode != NULL)
         {
           g_observeList = (struct st_observe_info *)cis_list_remove((cis_list_t *)g_observeList, delnode->mid, (cis_list_t **)&delnode);
-          LOGD("cis_on_observe cancel: %d/%d/%d\n",
+          LOGD("cis_on_observe cancel: %d/%d/%d",
             delnode->uri.objectId,
             CIS_URI_IS_SET_INSTANCE(&delnode->uri) ? delnode->uri.instanceId : -1,
             CIS_URI_IS_SET_RESOURCE(&delnode->uri) ? delnode->uri.resourceId : -1);
@@ -878,14 +878,14 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
 #if CIS_ENABLE_CMIOT_OTA
   cissys_assert(context != NULL);
 #endif
-  LOGD("cis_on_event(%d):%s\n", eid, STR_EVENT_CODE(eid));
+  LOGD("cis_on_event(%d):%s", eid, STR_EVENT_CODE(eid));
   switch (eid)
     {
       case CIS_EVENT_RESPONSE_FAILED:
-        LOGD("cis_on_event response failed mid:%d\n", (int32_t)param);
+        LOGD("cis_on_event response failed mid:%d", (int32_t)param);
         break;
       case CIS_EVENT_NOTIFY_FAILED:
-        LOGD("cis_on_event notify failed mid:%d\n", (int32_t)param);
+        LOGD("cis_on_event notify failed mid:%d", (int32_t)param);
         break;
       case CIS_EVENT_UPDATE_NEED:
         LOGD("cis_on_event need to update,reserve time:%ds\n", (int32_t)param);
@@ -903,41 +903,41 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         break;
     #if CIS_ENABLE_UPDATE
       case CIS_EVENT_FIRMWARE_DOWNLOADING:
-        LOGD("FIRMWARE_DOWNLOADING\r\n");
+        LOGD("FIRMWARE_DOWNLOADING");
         break;
       case CIS_EVENT_FIRMWARE_DOWNLOAD_FAILED:
-        LOGD("FIRMWARE_DOWNFAILED\r\n");
+        LOGD("FIRMWARE_DOWNFAILED");
         break;
       case CIS_EVENT_FIRMWARE_DOWNLOADED:
-        LOGD("FIRMWARE_DOWNLOADED:\r\n");
+        LOGD("FIRMWARE_DOWNLOADED:");
         break;
       case CIS_EVENT_FIRMWARE_UPDATING:
-        LOGD("FIRMWARE_UPDATING:\r\n");
+        LOGD("FIRMWARE_UPDATING:");
         break;
       case CIS_EVENT_FIRMWARE_TRIGGER:
-        LOGD("please update the firmware\r\n");
+        LOGD("please update the firmware");
         break;
     #if CIS_ENABLE_UPDATE_MCU
       case CIS_EVENT_SOTA_DOWNLOADING:
-        LOGD("SOTA_DOWNLOADING:\r\n");
+        LOGD("SOTA_DOWNLOADING:");
         break;
       case CIS_EVENT_SOTA_DOWNLOAED:
-        LOGD("SOTA_DOWNLOAED:\r\n");
+        LOGD("SOTA_DOWNLOAED:");
         break;
       case CIS_EVENT_SOTA_FLASHERASE:
-        LOGD("SOTA_FLASHERASE:\r\n");
+        LOGD("SOTA_FLASHERASE:");
         cissys_sleepms(2000);
         cis_notify_sota_result(ctx, sota_erase_success);
         break;
       case CIS_EVENT_SOTA_UPDATING:
         cis_set_sota_info( "1801102", 500);
-        LOGD("SOTA_UPDATING:\r\n");
+        LOGD("SOTA_UPDATING:");
         break;
     #endif
     #endif
     #if CIS_ENABLE_CMIOT_OTA
       case CIS_EVENT_CMIOT_OTA_START:
-        LOGD("cis_on_event CMIOT OTA start:%d\n", (int32_t)param);
+        LOGD("cis_on_event CMIOT OTA start:%d", (int32_t)param);
         if (ctx->cmiotOtaState == CMIOT_OTA_STATE_IDIL)
           {
             ctx->cmiotOtaState = CMIOT_OTA_STATE_START;
@@ -949,7 +949,7 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
       case CIS_EVENT_CMIOT_OTA_SUCCESS:
         if (ctx->cmiotOtaState == CMIOT_OTA_STATE_START)
           {
-            LOGD("cis_on_event CMIOT OTA success %d\n", (int32_t)param);
+            LOGD("cis_on_event CMIOT OTA success %d", (int32_t)param);
             ctx->cmiotOtaState = CMIOT_OTA_STATE_IDIL;
             cissys_recover_psm();
           }
@@ -958,7 +958,7 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         if (ctx->cmiotOtaState == CMIOT_OTA_STATE_START)
           {
             ctx->cmiotOtaState = CMIOT_OTA_STATE_IDIL;
-            LOGD("cis_on_event CMIOT OTA fail %d\n", (int32_t)param);
+            LOGD("cis_on_event CMIOT OTA fail %d", (int32_t)param);
             cissys_recover_psm();
           }
         break;
@@ -966,25 +966,25 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         if (ctx->cmiotOtaState == CMIOT_OTA_STATE_START || ctx->cmiotOtaState == CMIOT_OTA_STATE_IDIL)
           {
             ctx->cmiotOtaState = CMIOT_OTA_STATE_FINISH;
-            LOGD("cis_on_event CMIOT OTA finish %d\n", *((int8_t *)param));
+            LOGD("cis_on_event CMIOT OTA finish %d", *((int8_t *)param));
             cissys_recover_psm();
             switch (*((int8_t *)param))
               {
                 case OTA_FINISH_COMMAND_SUCCESS_CODE:
                   g_cmiot_otafinishstate_flag = OTA_HISTORY_STATE_FINISHED; //indicate ota procedure has finished
                   g_cmiot_ota_at_return_code = OTA_FINISH_AT_RETURN_SUCCESS;
-                  LOGD("OTA finish Success!\n");
+                  LOGD("OTA finish Success!");
                   break;
                 case OTA_FINISH_COMMAND_UNREGISTER_CODE:
                   g_cmiot_ota_at_return_code = OTA_FINISH_AT_RETURN_NO_REQUEST;
-                  LOGD("OTA finish fail: no OTA register on platform!\n");//indicates there is no ota request on the CMIOT platform
+                  LOGD("OTA finish fail: no OTA register on platform!");//indicates there is no ota request on the CMIOT platform
                   break;
                 case OTA_FINISH_COMMAND_FAIL_CODE:
                   g_cmiot_ota_at_return_code = OTA_FINISH_AT_RETURN_FAIL;
-                  LOGD("OTA finish fail: target NUM error!\n");//indicates the IMSI is not changed or the new IMSI is illegal
+                  LOGD("OTA finish fail: target NUM error!");//indicates the IMSI is not changed or the new IMSI is illegal
                   break;
                 default://unkown error from the platform
-                  LOGD("OTA finish fail: unknow error!\n");
+                  LOGD("OTA finish fail: unknow error!");
               }
           }
           break;
@@ -1084,7 +1084,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
         {
           cis_deinit(&g_cmcc_context);
         }
-      LOGE("cis entry init failed.\n");
+      LOGE("cis entry init failed.");
       return -1;
     }
 
@@ -1208,7 +1208,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
               numBytes = recv(netFd, (char*)buffer, MAX_PACKET_SIZE, 0);
               if (numBytes < 0)
                 {
-                  LOGE("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+                  LOGE("Error in recvfrom(): %d %s", errno, strerror(errno));
                 }
               else if (numBytes > 0)
                 {
@@ -1272,7 +1272,7 @@ int cisapi_initialize(void)
   pipe(g_cisapi_pip_fd);
   if (pthread_create(&g_cisapi_onenet_tid, NULL, cisapi_onenet_thread, NULL))
     {
-      LOGE("%s: pthread_create (%s)\n", __func__, strerror(errno));
+      LOGE("%s: pthread_create (%s)", __func__, strerror(errno));
       ret = -1;;
       goto clean;
     }

@@ -88,7 +88,7 @@ void cisapi_send_data_to_server(user_thread_context_t *utc)
 
   read(utc->send_pipe_fd[0], &udi, sizeof(user_data_info_t));
 
-  LOGI("\n\nuser_thread: send data %d bytes\n\n", udi.data_len);
+  LOGI("user_thread: send data %d bytes", udi.data_len);
   cis_notify_raw(utc->context, udi.data, udi.data_len);
   free(udi.data);
 }
@@ -123,7 +123,7 @@ static void recv_data_from_server(user_thread_context_t *utc)
     {
       bufLen += snprintf(buf + bufLen, 2 * udi.data_len + 1 - bufLen, "%02X", ((char *)(udi.data))[i]);
     }
-  LOGI("\n\nuser_thread: recv data: %d,%s.\n\n", udi.data_len, buf);
+  LOGI("user_thread: recv data: %d,%s.", udi.data_len, buf);
 
   free(buf);
   free(udi.data);
@@ -145,7 +145,7 @@ static void heartbeat_callback(FAR void *sival_ptr)
   user_thread_context_t *utc = (user_thread_context_t *)sival_ptr;
 #endif
 
-  LOGI("@@@@@@@@@@@ heartbeat callback utc: 0x%x and send heartbeat @@@@@@@@@@@\n", (unsigned int)utc);
+  LOGI("@@@@@@@@@@@ heartbeat callback utc: 0x%x and send heartbeat @@@@@@@@@@@", (unsigned int)utc);
   send_data_to_server(utc, data, sizeof(data));
 }
 
@@ -156,7 +156,7 @@ static timer_t create_heartbeat_timer(user_thread_context_t *utc)
   struct sigevent notify;
   struct itimerspec timer;
 
-  LOGI("@@@@@@@@@@@ Create heartbeat timer utc 0x%x @@@@@@@@@@@@\n", (unsigned int)utc);
+  LOGI("@@@@@@@@@@@ Create heartbeat timer utc 0x%x @@@@@@@@@@@@", (unsigned int)utc);
 
   file_detach(utc->send_pipe_fd[1], &utc->send_pipe_file);
 
@@ -173,7 +173,7 @@ static timer_t create_heartbeat_timer(user_thread_context_t *utc)
       return NULL;
     }
 
-  LOGI("@@@@@@@@@@@ Start heartbeat timer @@@@@@@@@@@@@\n");
+  LOGI("@@@@@@@@@@@ Start heartbeat timer @@@@@@@@@@@@@");
   timer.it_value.tv_sec     = 5;
   timer.it_value.tv_nsec    = 0;
   timer.it_interval.tv_sec  = 5;
@@ -190,7 +190,7 @@ static timer_t create_heartbeat_timer(user_thread_context_t *utc)
 
 static void destroy_heartbeat_timer(timer_t timerid)
 {
-  LOGI("@@@@@@@@@@@ Destroy heartbeat timer @@@@@@@@@@@@\n");
+  LOGI("@@@@@@@@@@@ Destroy heartbeat timer @@@@@@@@@@@@");
   timer_delete(timerid);
 }
 
@@ -200,19 +200,19 @@ static void disconnect_from_server(user_thread_context_t *utc)
   cisapi_wakeup_pump();
   sleep(5);
   ciscom_setRadioPower(false);
-  LOGI("\n\nDisconnect from server !\n\n");
+  LOGI("Disconnect from server!");
 }
 
 static void connect_to_server(user_thread_context_t *utc)
 {
   ciscom_setRadioPower(true);
   while (!ciscom_isRegistered(ciscom_getRegisteredStaus())) {
-      LOGI("############## CEREG not ready #################\n");
+      LOGI("############## CEREG not ready #################");
       sleep(1);
   }
   cisapi_wakeup_pump();
   sleep(5);
-  LOGI("\n\nConnect to server !\n\n");
+  LOGI("Connect to server !");
 }
 
 static void handle_gprmc(const char *s)
@@ -327,7 +327,7 @@ static void do_gps_capture(int fd)
   // you can do your gps job here, for example caputure gps data for 10 minutes
   pthread_mutex_lock(&g_gps_mutex);
   pthread_cond_wait(&g_gps_cond, &g_gps_mutex);
-  LOGI("\n\n@@@@@@@@@@ gps data = %s @@@@@@@@@@@@@\n\n", g_gps_data);
+  LOGI("@@@@@@@@@@ gps data = %s @@@@@@@@@@@@@", g_gps_data);
   pthread_mutex_unlock(&g_gps_mutex);
 
   stop_gps(fd);
@@ -346,7 +346,7 @@ void *cisapi_user_send_thread(void *obj)
   pthread_setname_np(pthread_self(), "cisapi_user_send_thread");
   pthread_detach(pthread_self());
 
-  LOGI("\n\nentering into user send thread send_pipe = %d\n\n", utc->send_pipe_fd[1]);
+  LOGI("entering into user send thread send_pipe = %d", utc->send_pipe_fd[1]);
   if (0)
     timerid = create_heartbeat_timer(utc);
   else
@@ -387,7 +387,7 @@ void *cisapi_user_recv_thread(void *obj)
 
   file_detach(utc->recv_pipe_fd[0], &utc->recv_pipe_file);
 
-  LOGI("\n\nentering into user recv thread\n\n");
+  LOGI("entering into user recv thread");
 
   while (1)
     {

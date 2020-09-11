@@ -139,7 +139,7 @@ static cis_coapret_t cis_api_onWriteRaw(void *context, const uint8_t *data, uint
     {
       bufLen += snprintf(buf + bufLen, 2 * length + 1 - bufLen, "%02X", data[i]);
     }
-  LOGI("cis_api_onWriteRaw :%d,%s\n", length, buf);
+  LOGI("cis_api_onWriteRaw :%d,%s", length, buf);
   cisapi_recv_data_from_server(&g_user_thread_context, data, length);
   free(buf);
   return CIS_RET_OK;
@@ -292,7 +292,7 @@ int cisapi_initialize(void)
   pthread_mutex_init(&g_reg_mutex, NULL);
   pthread_cond_init(&g_reg_cond, NULL);
 
-  LOGD("cisapi_initialize enter\n");
+  LOGD("cisapi_initialize enter");
 
   if (cis_init(&g_ctcc_context, (void *)config_hex, sizeof(config_hex)) != CIS_RET_OK)
     {
@@ -300,7 +300,7 @@ int cisapi_initialize(void)
         {
           cis_deinit(&g_ctcc_context);
         }
-      LOGE("cis entry init failed.\n");
+      LOGE("cis entry init failed.");
       return -1;
     }
 
@@ -317,7 +317,7 @@ int cisapi_initialize(void)
     }
   pthread_mutex_unlock(&g_reg_mutex);
 
-  LOGI("\n\n\nsleep 5 seconds before sending\n\n\n");
+  LOGI("sleep 5 seconds before sending");
   sleep(5);
 
   g_user_thread_context.context = g_ctcc_context;
@@ -326,18 +326,17 @@ int cisapi_initialize(void)
 
   if (pthread_create(&g_user_send_thread_tid, NULL, cisapi_user_send_thread, &g_user_thread_context))
     {
-      LOGE("%s: pthread_create send (%s)\n", __func__, strerror(errno));
+      LOGE("%s: pthread_create send (%s)", __func__, strerror(errno));
       ret = -1;
       goto clean;
     }
 
   if (pthread_create(&g_user_recv_thread_tid, NULL, cisapi_user_recv_thread, &g_user_thread_context))
     {
-      LOGE("%s: pthread_create recv (%s)\n", __func__, strerror(errno));
+      LOGE("%s: pthread_create recv (%s)", __func__, strerror(errno));
       ret = -1;
       goto clean;
     }
-
   while (1)
     {
       cisapi_send_data_to_server(&g_user_thread_context);
