@@ -122,6 +122,16 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         pthread_mutex_unlock(&g_reg_mutex);
         LOGD("cis_on_event unreg success");
         break;
+#if CIS_ENABLE_UPDATE
+      case CIS_EVENT_FIRMWARE_UPDATING:
+        LOGD("cis_on_event firmware update updating");
+        cis_notify_503(3);
+        break;
+      case CIS_EVENT_FIRMWARE_UPDATE_SUCCESS:
+        LOGD("cis_on_event firmware update success");
+        cis_notify_503(0);
+        break;
+#endif
       default:
         LOGD("cis_on_event:%d", eid);
         break;
@@ -319,6 +329,10 @@ int cisapi_initialize(void)
 
   LOGI("sleep 5 seconds before sending");
   sleep(5);
+
+#if CIS_ENABLE_UPDATE
+  cis_check_fota_update();
+#endif
 
   g_user_thread_context.context = g_ctcc_context;
   pipe(g_user_thread_context.send_pipe_fd);
