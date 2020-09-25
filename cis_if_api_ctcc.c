@@ -127,9 +127,9 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
         LOGD("cis_on_event firmware update updating");
         cis_notify_503(3);
         break;
-      case CIS_EVENT_FIRMWARE_UPDATE_SUCCESS:
-        LOGD("cis_on_event firmware update success");
-        cis_notify_503(0);
+      case CIS_EVENT_START_NB_GPS_THREAD:
+        LOGD("cis_on_event start nb gps thread");
+        start_nb_gps_thread();
         break;
 #endif
       default:
@@ -302,6 +302,10 @@ int cisapi_initialize(void)
   pthread_mutex_init(&g_reg_mutex, NULL);
   pthread_cond_init(&g_reg_cond, NULL);
 
+#if CIS_ENABLE_UPDATE
+  pthread_mutex_init(get_nb_gps_mutex(), NULL);
+#endif
+
   LOGD("cisapi_initialize enter");
 
   if (cis_init(&g_ctcc_context, (void *)config_hex, sizeof(config_hex)) != CIS_RET_OK)
@@ -356,10 +360,11 @@ int cisapi_initialize(void)
       cisapi_send_data_to_server(&g_user_thread_context);
       prv_observeNotify(g_ctcc_context);
       pthread_mutex_lock(&g_reg_mutex);
-      if (g_exit) {
+      if (g_exit)
+        {
           pthread_mutex_unlock(&g_reg_mutex);
           break;
-      }
+        }
       pthread_mutex_unlock(&g_reg_mutex);
     }
 
@@ -391,6 +396,17 @@ clean:
   return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////
+#if CIS_ENABLE_UPDATE
+void start_nb_gps_thread(void)
+{
+  LOGI("[%s]: start nb gps thread", __func__);
+  if (pthread_create(&g_user_send_thread_tid, NULL, cisapi_user_send_thread, &g_user_thread_context))
+    {
+      LOGE("%s: pthread_create send (%s)", __func__, strerror(errno));
+      return;
+    }
+}
+#endif
+
 #endif
 

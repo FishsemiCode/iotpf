@@ -338,7 +338,6 @@ static void do_gps_capture(int fd)
 void *cisapi_user_send_thread(void *obj)
 {
   int at_fd;
-  timer_t timerid;
   user_thread_context_t *utc = (user_thread_context_t *)obj;
   uint8_t data[6] = {0x05, 0x31, 0x32, 0x33, 0x34, 0x35};
 
@@ -347,10 +346,7 @@ void *cisapi_user_send_thread(void *obj)
   pthread_detach(pthread_self());
 
   LOGI("entering into user send thread send_pipe = %d", utc->send_pipe_fd[1]);
-  if (0)
-    timerid = create_heartbeat_timer(utc);
-  else
-    file_detach(utc->send_pipe_fd[1], &utc->send_pipe_file);
+  file_detach(utc->send_pipe_fd[1], &utc->send_pipe_file);
 
   at_fd = ciscom_getATHandle();
   register_indication(at_fd, "$GPRMC", handle_gprmc);
@@ -364,16 +360,29 @@ void *cisapi_user_send_thread(void *obj)
           break;
         }
       pthread_mutex_unlock(&g_exit_mutex);
+
       send_data_to_server(utc, data, sizeof(data));
       sleep(REPORT_INTERVAL);
+#if CIS_ENABLE_UPDATE
+      pthread_mutex_lock(get_nb_gps_mutex());
+      LOGI("[%s]mutex_lock", __func__);
+      if (cis_get_fota_update_state())
+        {
+          LOGI("[%s]fota update working, return", __func__);
+          pthread_mutex_unlock(get_nb_gps_mutex());
+          return NULL;
+        }
+#endif
       disconnect_from_server(utc);
       do_gps_capture(at_fd);
       sleep(REPORT_INTERVAL);
       connect_to_server(utc);
+#if CIS_ENABLE_UPDATE
+      pthread_mutex_unlock(get_nb_gps_mutex());
+      LOGI("[%s]mutex_unlock", __func__);
+#endif
     }
 
-  if (0)
-  destroy_heartbeat_timer(timerid);
   return NULL;
 }
 
@@ -403,5 +412,4 @@ void *cisapi_user_recv_thread(void *obj)
 
   return NULL;
 }
-
 #endif /* CIS_ONE_MCU && CIS_OPERATIOR_CTCC */

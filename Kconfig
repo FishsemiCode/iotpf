@@ -3,49 +3,49 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 config SERVICES_IOTPF
-	bool "Services IOTPF"
-	default n
-	select SERVICES_IOTPF_LIB
-	---help---
-		Enable the IOTPF services
+    bool "Services IOTPF"
+    default y
+    select SERVICES_IOTPF_LIB
+    ---help---
+        Enable the IOTPF services
 
 if SERVICES_IOTPF
 
 config SERVICES_IOTPF_PRIORITY
-	int "iotpf task priority"
-	default 80
-	---help---
-		The priority for iotpf task.
+    int "iotpf task priority"
+    default 80
+    ---help---
+        The priority for iotpf task.
 
 config SERVICES_IOTPF_STACKSIZE
-	int "iotpf task stack size"
-	default 2048
-	---help---
-		The stack size allocated for the iotpf task.
+    int "iotpf task stack size"
+    default 2048
+    ---help---
+        The stack size allocated for the iotpf task.
 
 config SERVICES_IOTPF_OPERATOR
-	string "iotpf operator"
-	default "ctcc"
-	---help---
-		Which operator iot platform want to connect to.
-		Now support ctcc and cmcc.
+    string "iotpf operator"
+    default "ctcc"
+    ---help---
+        Which operator iot platform want to connect to.
+        Now support ctcc and cmcc.
 
 config SERVICES_IOTPF_MODE
-	string "iotpf mode"
-	default "api"
-	---help---
-		Which mode iotpf service works.
-		Now support "at" and "api"
+    string "iotpf mode"
+    default "api"
+    ---help---
+        Which mode iotpf service works.
+        Now support "at" and "api"
 
 config SERVICES_IOTPF_OTA_UPDATE
     bool "OTA update"
-    default n
+    default y
     ---help---
         Enable the OTA update
 
 config SERVICES_IOTPF_CTWING
     bool "ctwing support"
-    default n
+    default y
     ---help---
         CTCC ctwing protocol support.
 
