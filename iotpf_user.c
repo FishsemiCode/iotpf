@@ -163,7 +163,7 @@ static timer_t create_heartbeat_timer(user_thread_context_t *utc)
   notify.sigev_notify            = SIGEV_THREAD;
   notify.sigev_signo             = HEARTBEAT_TIMER_SIGNAL;
   notify.sigev_value.sival_int   = (int)utc;
-  notify.sigev_notify_function   = heartbeat_callback;
+  notify.sigev_notify_function   = (void *)heartbeat_callback;
   notify.sigev_notify_attributes = NULL;
 
   ret = timer_create(CLOCK_REALTIME, &notify, &timerid);
