@@ -4,7 +4,7 @@
 #
 config SERVICES_IOTPF
     bool "Services IOTPF"
-    default y
+    default n
     select SERVICES_IOTPF_LIB
     ---help---
         Enable the IOTPF services
@@ -39,13 +39,13 @@ config SERVICES_IOTPF_MODE
 
 config SERVICES_IOTPF_OTA_UPDATE
     bool "OTA update"
-    default y
+    default n
     ---help---
         Enable the OTA update
 
 config SERVICES_IOTPF_CTWING
     bool "ctwing support"
-    default y
+    default n
     ---help---
         CTCC ctwing protocol support.
 
