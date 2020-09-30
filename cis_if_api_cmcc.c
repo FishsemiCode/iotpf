@@ -46,7 +46,7 @@
 
 
 #if CIS_ONE_MCU
-#define MAX_PACKET_SIZE        (256)
+#define MAX_PACKET_SIZE        (600)
 
 static const uint8_t config_hex[] =
 {
@@ -85,7 +85,7 @@ static st_instance_b g_instList_b[SAMPLE_B_INSTANCE_COUNT];
 static int g_cisapi_pip_fd[2];
 static pthread_t g_cisapi_onenet_tid = -1;
 
-void cisapi_wakeup_pump(void)
+void cisapi_cmcc_wakeup_pump(void)
 {
   write(g_cisapi_pip_fd[1], "w", 1);
 }
@@ -296,7 +296,7 @@ static void prv_observeNotify(void *context, cis_uri_t *uri, cis_mid_t mid)
             break;
         }
     }
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
 }
 
 static cis_coapret_t prv_readResponse(void *context, cis_uri_t *uri, cis_mid_t mid)
@@ -506,7 +506,7 @@ static cis_coapret_t prv_readResponse(void *context, cis_uri_t *uri, cis_mid_t m
             break;
         }
     }
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -580,7 +580,7 @@ static cis_coapret_t prv_discoverResponse(void *context, cis_uri_t *uri, cis_mid
         break;
     }
   cis_response(context, NULL, NULL, mid, CIS_RESPONSE_DISCOVER);
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -681,7 +681,7 @@ static cis_coapret_t prv_writeResponse(void *context, cis_uri_t *uri, const cis_
         break;
     }
   cis_response(context, NULL, NULL, mid, CIS_RESPONSE_WRITE);
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -747,7 +747,7 @@ static cis_coapret_t prv_execResponse(void *context, cis_uri_t *uri, const uint8
         }
         break;
     }
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -778,7 +778,7 @@ static cis_coapret_t prv_paramsResponse(void *context, cis_uri_t *uri, cis_obser
   /*do*/
 
   cis_response(context, NULL, NULL, mid, CIS_RESPONSE_OBSERVE_PARAMS);
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -834,7 +834,7 @@ static cis_coapret_t prv_observeResponse(void *context, cis_uri_t *uri, bool fla
           return CIS_RESPONSE_NOT_FOUND;
         }
     }
-  cisapi_wakeup_pump();
+  cisapi_cmcc_wakeup_pump();
   return CIS_RET_OK;
 }
 
@@ -1212,7 +1212,7 @@ int cisapi_sample_entry(const uint8_t *config_bin, uint32_t config_size)
                 }
               else if (numBytes > 0)
                 {
-                  LOGD("%d bytes received", numBytes);
+                  LOGI("[%s]received %d bytes", __func__, numBytes);
                   uint8_t* data = (uint8_t*)cis_malloc(numBytes);
                   cis_memcpy(data,buffer,numBytes);
                   struct st_net_packet *packet = (struct st_net_packet*)cis_malloc(sizeof(struct st_net_packet));
