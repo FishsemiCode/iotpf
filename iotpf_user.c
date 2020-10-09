@@ -42,7 +42,6 @@
 #include <string.h>
 
 #include "at_api.h"
-#include "cis_internals.h"
 #include "cis_log.h"
 #include "cis_api.h"
 #include "cis_if_api_ctcc.h"
@@ -71,7 +70,7 @@ static void send_data_to_server(user_thread_context_t *utc,
 {
   user_data_info_t udi;
 
-  udi.data = cis_malloc(data_len);
+  udi.data = (uint8_t*)malloc(data_len);
   if (udi.data == NULL)
     {
       return;
@@ -98,7 +97,7 @@ void cisapi_recv_data_from_server(user_thread_context_t *utc,
 {
   user_data_info_t udi;
 
-  udi.data = cis_malloc(data_len);
+  udi.data = (uint8_t*)malloc(data_len);
   if (udi.data == NULL)
     {
       return;
