@@ -73,10 +73,19 @@
  * Public Funtions
  ****************************************************************************/
 
+static void usage(void)
+{
+  LOGI("Usage: iotpf [x]");
+  LOGI("iotpf: start gps thread, do not start update");
+  LOGI("iotpf 0: start gps thread, do not start update");
+  LOGI("iotpf 1: start update, do not start gps thread");
+  LOGI("iotpf other: error, return");
+}
 
 static int iotpf_daemon(int argc, char *argv[])
 {
   int ret;
+  int iotpf_mode = 0;
   cis_iotpf_configs iotpf_configs;
 #ifdef CIS_TWO_MCU
   iotpf_configs.iotpf_mode = cis_iotpf_mode_at;
@@ -89,6 +98,20 @@ static int iotpf_daemon(int argc, char *argv[])
 #else
     iotpf_configs.iotpf_operator = cis_iotpf_operator_cmcc;
 #endif
+
+  //iotpf_mode=1, start update process, dont start gps thread
+  if(argc >= 2)
+    {
+      if(atoi(argv[1]) == 0 || atoi(argv[1]) == 1)
+        {
+          iotpf_mode = atoi(argv[1]);
+        }
+      else
+        {
+          usage();
+          return -1;
+        }
+    }
 
   ret = ciscom_initialize(&iotpf_configs);
   if (ret < 0)
@@ -105,7 +128,7 @@ static int iotpf_daemon(int argc, char *argv[])
     }
   cisat_readloop(ret);
 #else
-  ret = cisapi_initialize();
+  ret = cisapi_initialize(iotpf_mode);
   if (ret < 0)
     {
       LOGE("cisapi_initialize error");

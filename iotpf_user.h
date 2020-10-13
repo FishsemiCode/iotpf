@@ -48,8 +48,9 @@ typedef struct user_data_info_s
 typedef struct user_thread_context_s
 {
   void *context;
-  int  send_pipe_fd[2];
-  int  recv_pipe_fd[2];
+  int send_pipe_fd[2];
+  int recv_pipe_fd[2];
+  int iotpf_mode;
   struct file send_pipe_file;
   struct file recv_pipe_file;
 } user_thread_context_t;

@@ -336,8 +336,18 @@ static void do_gps_capture(int fd)
 
 void *cisapi_user_send_thread(void *obj)
 {
+  if(NULL == obj)
+    {
+      LOGE("[%s]obj is null", __func__);
+      return NULL;
+    }
   int at_fd;
   user_thread_context_t *utc = (user_thread_context_t *)obj;
+  if(utc->iotpf_mode == 1)
+    {
+      LOGI("[%s]iotpf_mode is 1, means update process, so return user send thread", __func__);
+      return NULL;
+    }
   uint8_t data[6] = {0x05, 0x31, 0x32, 0x33, 0x34, 0x35};
 
   pthread_mutex_init(&g_exit_mutex, NULL);
@@ -387,7 +397,17 @@ void *cisapi_user_send_thread(void *obj)
 
 void *cisapi_user_recv_thread(void *obj)
 {
+  if(NULL == obj)
+    {
+      LOGE("[%s]obj is null", __func__);
+      return NULL;
+    }
   user_thread_context_t *utc = (user_thread_context_t *)obj;
+  if(utc->iotpf_mode == 1)
+    {
+      LOGI("[%s]iotpf_mode is 1, means update process, so return user recv thread", __func__);
+      return NULL;
+    }
 
   pthread_mutex_init(&g_exit_mutex, NULL);
   pthread_setname_np(pthread_self(), "cisapi_user_send_thread");

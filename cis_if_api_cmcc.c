@@ -1266,7 +1266,7 @@ void *cisapi_onenet_thread(void *obj)
   return NULL;
 }
 
-int cisapi_initialize(void)
+int cisapi_initialize(int iotpf_mode)
 {
   int ret;
   pipe(g_cisapi_pip_fd);

@@ -285,7 +285,7 @@ static cis_ret_t prv_clean_sample_data(void *contextP)
   return CIS_RET_OK;
 }
 
-int cisapi_initialize(void)
+int cisapi_initialize(int iotpf_mode)
 {
   int ret;
   cis_time_t g_lifetime = 3600;
@@ -339,6 +339,7 @@ int cisapi_initialize(void)
 #endif
 
   g_user_thread_context.context = g_ctcc_context;
+  g_user_thread_context.iotpf_mode = iotpf_mode;
   pipe(g_user_thread_context.send_pipe_fd);
   pipe(g_user_thread_context.recv_pipe_fd);
 
