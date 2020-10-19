@@ -331,6 +331,9 @@ int cisapi_initialize(int iotpf_mode)
     }
   pthread_mutex_unlock(&g_reg_mutex);
 
+  g_user_thread_context.context = g_ctcc_context;
+  g_user_thread_context.iotpf_mode = iotpf_mode;
+
   LOGI("sleep 5 seconds before sending");
   sleep(5);
 
@@ -338,8 +341,6 @@ int cisapi_initialize(int iotpf_mode)
   cis_check_fota_update();
 #endif
 
-  g_user_thread_context.context = g_ctcc_context;
-  g_user_thread_context.iotpf_mode = iotpf_mode;
   pipe(g_user_thread_context.send_pipe_fd);
   pipe(g_user_thread_context.recv_pipe_fd);
 
