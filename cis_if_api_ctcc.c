@@ -138,7 +138,7 @@ static void cis_api_onEvent(void *context, cis_evt_t eid, void *param)
     }
 }
 
-static cis_coapret_t cis_api_onWriteRaw(void *context, const uint8_t *data, uint32_t length)
+static cis_coapret_t cis_api_onWriteRaw(void *context, const uint8_t *data, uint32_t length, cis_mid_t mid)
 {
   /*TODO*/
   int i;
