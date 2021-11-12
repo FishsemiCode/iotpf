@@ -308,7 +308,7 @@ int cisapi_initialize(int iotpf_mode)
 
   LOGD("cisapi_initialize enter");
 
-  if (cis_init(&g_ctcc_context, (void *)config_hex, sizeof(config_hex)) != CIS_RET_OK)
+  if (cis_init_with_vendor(&g_ctcc_context, (void *)config_hex, sizeof(config_hex), 0) != CIS_RET_OK)
     {
       if (g_ctcc_context != NULL)
         {
@@ -357,6 +357,7 @@ int cisapi_initialize(int iotpf_mode)
       ret = -1;
       goto clean;
     }
+
   while (1)
     {
       cisapi_send_data_to_server(&g_user_thread_context);
@@ -370,18 +371,6 @@ int cisapi_initialize(int iotpf_mode)
       pthread_mutex_unlock(&g_reg_mutex);
     }
 
-  struct timespec time;
-
-  time.tv_sec = 60;
-  time.tv_nsec = 0;
-
-  pthread_mutex_lock(&g_reg_mutex);
-  while (g_reg_status)
-    {
-      pthread_cond_timedwait(&g_reg_cond, &g_reg_mutex, &time);
-    }
-  pthread_mutex_unlock(&g_reg_mutex);
-
 clean:
   close(g_user_thread_context.send_pipe_fd[0]);
   close(g_user_thread_context.send_pipe_fd[1]);
@@ -390,11 +379,26 @@ clean:
 
   cis_unregister(g_ctcc_context);
 
+  struct timeval now;
+  struct timespec time;
+
+  gettimeofday(&now, NULL);
+  time.tv_sec = now.tv_sec + 30;
+  time.tv_nsec = now.tv_usec * 1000;
+
+  pthread_mutex_lock(&g_reg_mutex);
+  while (g_reg_status)
+    {
+      pthread_cond_timedwait(&g_reg_cond, &g_reg_mutex, &time);
+    }
+  pthread_mutex_unlock(&g_reg_mutex);
+
   prv_clean_sample_data(g_ctcc_context);
-  cis_deinit(g_ctcc_context);
+  cis_deinit(&g_ctcc_context);
 
   pthread_mutex_destroy(&g_reg_mutex);
   pthread_cond_destroy(&g_reg_cond);
+
   return ret;
 }
 
