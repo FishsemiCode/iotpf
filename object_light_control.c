@@ -388,6 +388,31 @@ uint8_t light_control_observe(void *context, cis_uri_t *uri, bool flag, cis_mid_
 {
   if (flag)
     {
+      st_observe_info *targetP = light_control_observe_list;
+      st_observe_info *deleteP = targetP;
+      while (targetP != NULL)
+        {
+         if (targetP->uri.objectId == uri->objectId)
+           {
+             if (CIS_URI_IS_SET_INSTANCE(uri) && CIS_URI_IS_SET_INSTANCE(&(targetP->uri)) &&
+                 (uri->instanceId == targetP->uri.instanceId))
+               {
+                 deleteP = targetP;
+                 targetP = (st_observe_info*)targetP->next;
+                 light_control_observe_list = (st_observe_info*)cis_list_remove((cis_list_t*)light_control_observe_list,
+                   (cis_listid_t)deleteP->mid, (cis_list_t**)&deleteP);
+                 LOGD("light_control_observe remove:%d/%d/%d mid:%d",
+                   deleteP->uri.objectId,
+                   CIS_URI_IS_SET_INSTANCE(&deleteP->uri) ? deleteP->uri.instanceId : -1,
+                   CIS_URI_IS_SET_RESOURCE(&deleteP->uri) ? deleteP->uri.resourceId : -1,
+                   deleteP->mid);
+                 free(deleteP);
+                 continue;
+               }
+           }
+         targetP = (st_observe_info*)targetP->next;
+        }
+
       st_observe_info *observe_new = (st_observe_info*)malloc(sizeof(st_observe_info));
       observe_new->mid = mid;
       memcpy(&(observe_new->uri), uri, sizeof(cis_uri_t));
